@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TRENCH</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231a0b2e'/><path d='M6 22 L13 10 L19 18 L26 6' stroke='%23a78bfa' stroke-width='3' fill='none' stroke-linecap='round'/></svg>">
+<title>TRENCHH</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a0b2e'/%3E%3Cpath d='M6 22 L13 10 L19 18 L26 6' stroke='%23a78bfa' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,6 +15,7 @@
   --panel:#120c22;
   --panel2:#1a1130;
   --panel3:#241842;
+  --panel4:#2d1f52;
   --line:rgba(167,139,250,.12);
   --line2:rgba(167,139,250,.22);
   --text:#f0ecff;
@@ -25,9 +26,11 @@
   --accent-dim:rgba(167,139,250,.12);
   --cyan:#67e8f9;
   --green:#4ade80;
-  --green-dim:rgba(74,222,128,.1);
+  --green2:#22c55e;
+  --green-dim:rgba(74,222,128,.12);
   --red:#f87171;
-  --red-dim:rgba(248,113,113,.1);
+  --red2:#ef4444;
+  --red-dim:rgba(248,113,113,.12);
   --amber:#fbbf24;
   --ui:'Inter',system-ui,sans-serif;
   --mono:'JetBrains Mono',monospace;
@@ -48,12 +51,11 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 input,select{font-family:inherit;color:inherit}
 a{color:inherit;text-decoration:none}
 
-/* ========= LAYOUT ========= */
 .app{display:grid;grid-template-rows:64px 1fr;height:100vh;max-height:100vh}
 .topbar{
   display:flex;align-items:center;gap:20px;
   padding:0 24px;
-  background:rgba(18,12,34,.7);
+  background:rgba(18,12,34,.85);
   backdrop-filter:blur(20px);
   border-bottom:1px solid var(--line);
   position:relative;z-index:10;
@@ -67,10 +69,12 @@ a{color:inherit;text-decoration:none}
 }
 .brand-name{font-size:18px;font-weight:800;letter-spacing:.04em}
 .brand-name span{color:var(--accent)}
-.brand-tag{font-size:10px;color:var(--faint);letter-spacing:.18em;font-weight:500;margin-left:4px}
-.search{
-  flex:1;max-width:560px;position:relative;
+.brand-tag{
+  font-size:9px;color:var(--accent2);letter-spacing:.16em;font-weight:700;
+  padding:3px 8px;border-radius:4px;background:var(--accent-dim);
+  border:1px solid rgba(167,139,250,.25);margin-left:6px;
 }
+.search{flex:1;max-width:560px;position:relative}
 .search input{
   width:100%;
   background:var(--panel2);
@@ -115,7 +119,9 @@ a{color:inherit;text-decoration:none}
   background:var(--panel2);
   border:1px solid var(--line);
   min-width:110px;
+  transition:all .15s;
 }
+.wallet-chip:hover{border-color:var(--line2)}
 .wallet-chip .lbl{font-size:10px;color:var(--faint);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
 .wallet-chip .val{font-family:var(--mono);font-size:14px;font-weight:700;margin-top:2px}
 .wallet-chip .val.up{color:var(--green)} .wallet-chip .val.dn{color:var(--red)}
@@ -127,40 +133,13 @@ a{color:inherit;text-decoration:none}
 }
 .btn-ghost:hover{background:var(--panel3);color:var(--text);border-color:var(--line2)}
 
-.main{
-  display:grid;grid-template-columns:380px 1fr 340px;
-  min-height:0;overflow:hidden;
-}
-.col{
-  display:flex;flex-direction:column;
-  min-height:0;
-  border-right:1px solid var(--line);
-  background:var(--panel);
-}
+.main{display:grid;grid-template-columns:380px 1fr 340px;min-height:0;overflow:hidden}
+.col{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line);background:var(--panel)}
 .col:last-child{border-right:none;border-left:1px solid var(--line)}
-.col-head{
-  padding:16px 20px;
-  border-bottom:1px solid var(--line);
-  flex-shrink:0;
-}
-.col-title{
-  font-size:12px;font-weight:700;
-  letter-spacing:.14em;text-transform:uppercase;
-  color:var(--dim);
-  display:flex;align-items:center;justify-content:space-between;
-}
-.col-title .count{
-  font-family:var(--mono);font-size:10px;
-  padding:2px 7px;border-radius:10px;
-  background:var(--accent-dim);color:var(--accent2);
-  font-weight:600;
-}
-.tabs{
-  display:flex;gap:2px;padding:0 16px;
-  border-bottom:1px solid var(--line);
-  background:var(--panel);
-  flex-shrink:0;
-}
+.col-head{padding:16px 20px;border-bottom:1px solid var(--line);flex-shrink:0}
+.col-title{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);display:flex;align-items:center;justify-content:space-between}
+.col-title .count{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:10px;background:var(--accent-dim);color:var(--accent2);font-weight:600}
+.tabs{display:flex;gap:2px;padding:0 16px;border-bottom:1px solid var(--line);background:var(--panel);flex-shrink:0}
 .tab{
   padding:12px 16px;
   font-size:12px;font-weight:600;
@@ -174,7 +153,6 @@ a{color:inherit;text-decoration:none}
 .tab .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-/* ========= LEFT: TOKEN LIST ========= */
 .filters{padding:12px 16px;display:flex;gap:6px;border-bottom:1px solid var(--line);flex-shrink:0;overflow-x:auto}
 .filters::-webkit-scrollbar{display:none}
 .chip{
@@ -222,14 +200,10 @@ a{color:inherit;text-decoration:none}
 .token-age{font-size:10px;color:var(--faint);margin-top:2px}
 .fl-up{animation:fl .8s} .fl-dn{animation:fl .8s}
 @keyframes fl{0%{background:rgba(167,139,250,.2)}100%{}}
-.empty-state{
-  padding:40px 20px;text-align:center;color:var(--faint);
-  font-size:12px;line-height:1.8;
-}
+.empty-state{padding:40px 20px;text-align:center;color:var(--faint);font-size:12px;line-height:1.8}
 .empty-state .em{font-size:28px;margin-bottom:8px;opacity:.5}
 .empty-state button{margin-top:14px}
 
-/* ========= CENTER: CHART ========= */
 .chart-col{background:linear-gradient(180deg,var(--panel) 0%,#0a0614 100%)}
 .chart-head{padding:20px 24px 16px;border-bottom:1px solid var(--line);flex-shrink:0}
 .token-header{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
@@ -240,7 +214,7 @@ a{color:inherit;text-decoration:none}
 .token-title .sym{color:var(--faint);font-weight:600;font-size:14px}
 .token-sub{font-size:11px;color:var(--faint);margin-top:4px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .token-sub a{
-  padding:2px 8px;border-radius:5px;
+  padding:3px 10px;border-radius:6px;
   background:var(--panel3);color:var(--dim);
   font-size:10px;font-weight:600;
   border:1px solid var(--line);
@@ -295,13 +269,7 @@ a{color:inherit;text-decoration:none}
 }
 .chart-empty .em{font-size:32px;opacity:.5}
 
-/* ========= TRADE CARD ========= */
-.trade-card{
-  padding:20px 24px;
-  border-top:1px solid var(--line);
-  background:var(--panel);
-  flex-shrink:0;
-}
+.trade-card{padding:20px 24px;border-top:1px solid var(--line);background:var(--panel);flex-shrink:0}
 .trade-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:16px;align-items:end}
 .trade-box{
   background:var(--panel2);
@@ -342,7 +310,6 @@ a{color:inherit;text-decoration:none}
 .exec.sell:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(248,113,113,.4)}
 .exec:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
 
-/* ========= RIGHT: PORTFOLIO / COPY ========= */
 .right-tabs{display:flex;border-bottom:1px solid var(--line);flex-shrink:0;padding:0 16px}
 .rtab{
   flex:1;padding:14px 8px;
@@ -359,7 +326,6 @@ a{color:inherit;text-decoration:none}
 .right-body::-webkit-scrollbar{width:6px}
 .right-body::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px}
 
-/* Portfolio card */
 .pf-card{
   padding:18px;border-radius:12px;
   background:linear-gradient(135deg,var(--panel3),var(--panel2));
@@ -380,7 +346,6 @@ a{color:inherit;text-decoration:none}
 .pf-card .row .k{font-size:10px;color:var(--faint);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
 .pf-card .row .v{font-family:var(--mono);font-weight:600;margin-top:3px}
 
-/* Positions */
 .pos{
   padding:12px;border-radius:10px;
   background:var(--panel2);border:1px solid var(--line);
@@ -404,7 +369,6 @@ a{color:inherit;text-decoration:none}
 .pos-grid .v{font-family:var(--mono);font-weight:600;margin-top:2px}
 .pos-pnl{grid-column:1/-1;padding-top:8px;border-top:1px solid var(--line);margin-top:8px;font-family:var(--mono);font-weight:700;font-size:13px}
 
-/* History */
 .hist{
   display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;
   padding:10px 4px;border-bottom:1px solid var(--line);
@@ -417,7 +381,6 @@ a{color:inherit;text-decoration:none}
 .hist .what .meta{font-size:10px;color:var(--faint);margin-top:2px}
 .hist .amt{text-align:right;font-family:var(--mono);font-weight:600}
 
-/* Copy Trading */
 .copy-hero{
   padding:20px;border-radius:12px;
   background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(103,232,249,.04));
@@ -489,7 +452,6 @@ a{color:inherit;text-decoration:none}
 .status-pill.on{background:var(--green-dim);color:var(--green);border:1px solid rgba(74,222,128,.3)}
 .status-pill.off{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,113,113,.3)}
 
-/* Status bar */
 .statusbar{
   display:flex;align-items:center;gap:16px;
   padding:0 20px;
@@ -503,7 +465,6 @@ a{color:inherit;text-decoration:none}
 .statusbar .dot.err{background:var(--red);box-shadow:0 0 8px var(--red)}
 .statusbar .right{margin-left:auto;color:#3a3252}
 
-/* Toasts */
 #toasts{position:fixed;top:80px;right:20px;z-index:200;display:flex;flex-direction:column;gap:8px;max-width:340px}
 .toast{
   background:var(--panel2);
@@ -546,14 +507,13 @@ a{color:inherit;text-decoration:none}
 </head>
 <body>
 <div class="app">
-  <!-- TOP BAR -->
   <header class="topbar">
     <div class="brand">
       <div class="brand-icon">
         <svg width="18" height="18" viewBox="0 0 32 32" fill="none"><path d="M6 22 L13 10 L19 18 L26 6" stroke="#0a0614" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
       <div>
-        <div class="brand-name">TRENCH<span>.</span></div>
+        <div class="brand-name">TRENCHH<span>.</span></div>
       </div>
       <span class="brand-tag">PAPER</span>
     </div>
@@ -571,9 +531,7 @@ a{color:inherit;text-decoration:none}
 
   <div class="rate-banner hidden" id="rateBanner">⚠ <span id="rateMsg"></span></div>
 
-  <!-- MAIN -->
   <main class="main">
-    <!-- LEFT: TOKEN LIST -->
     <aside class="col">
       <div class="tabs" id="feedTabs">
         <div class="tab active" data-t="trenches"><span class="dot"></span>Trenches</div>
@@ -601,7 +559,6 @@ a{color:inherit;text-decoration:none}
       <div class="list" id="rows"></div>
     </aside>
 
-    <!-- CENTER: CHART + TRADE -->
     <section class="col chart-col">
       <div class="chart-head">
         <div class="token-header">
@@ -666,7 +623,6 @@ a{color:inherit;text-decoration:none}
       </div>
     </section>
 
-    <!-- RIGHT: PORTFOLIO / POS / HIST / COPY -->
     <aside class="col">
       <div class="pf-card">
         <div class="lbl">Portfolio Value</div>
@@ -685,7 +641,6 @@ a{color:inherit;text-decoration:none}
     </aside>
   </main>
 
-  <!-- STATUS BAR -->
   <footer class="statusbar">
     <span class="dot" id="sbDot"></span>
     <span id="sbStatus">Booting…</span>
@@ -703,8 +658,7 @@ const START_CASH=10000;
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
 
-// ============ STATE ============
-const K='trench.v4.';
+const K='trenchh.v5.';
 const wallet=load(K+'wallet',{cash:START_CASH,pos:{},hist:[]});
 let feedMode=load(K+'feed','trenches');
 let chainFilter=load(K+'chain','all');
@@ -713,12 +667,11 @@ let watchlist=load(K+'watch',[]);
 let copyWallets=load(K+'copy',[]);
 let sel=load(K+'sel',null);
 let tokens={};
-let priceHist={};  // id -> [{t,p}]
+let priceHist={};
 let currentTF=load(K+'tf','1h');
 let feedTokens=[];
 let pollBusy=false,feedBusy=false;
 
-// ============ UTILS ============
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 function saveWallet(){save(K+'wallet',wallet)}
@@ -752,7 +705,6 @@ const chainShort=c=>({solana:'SOL',base:'BASE',eth:'ETH',ethereum:'ETH',bsc:'BSC
 
 function setStatus(msg,ok=true){$('#sbStatus').textContent=msg;$('#sbDot').classList.toggle('err',!ok)}
 
-// ============ API (DexScreener only, CORS-friendly) ============
 async function getJSON(url,timeout=8000){
   const ctrl=new AbortController();
   const to=setTimeout(()=>ctrl.abort(),timeout);
@@ -766,7 +718,6 @@ async function getJSON(url,timeout=8000){
   }finally{clearTimeout(to)}
 }
 
-// ============ NORMALIZE ============
 function normPair(p){
   return{
     chain:p.chainId,
@@ -798,13 +749,19 @@ function normPair(p){
   };
 }
 
-// ============ FEED LOADERS ============
 async function fetchTrenches(){
   try{
     const j=await getJSON(`${DS}/token-profiles/latest/v1`);
     const arr=(j||[]).filter(x=>x.chainId&&x.tokenAddress);
     return await hydrateBatch(arr.map(x=>({chainId:x.chainId,address:x.tokenAddress,icon:x.icon})));
-  }catch(e){return[]}
+  }catch(e){
+    // Fallback to boosts if profiles fail
+    try{
+      const j=await getJSON(`${DS}/token-boosts/latest/v1`);
+      const arr=(j||[]).filter(x=>x.chainId&&x.tokenAddress);
+      return await hydrateBatch(arr.map(x=>({chainId:x.chainId,address:x.tokenAddress})));
+    }catch(e2){return[]}
+  }
 }
 async function fetchTrending(){
   try{
@@ -860,7 +817,6 @@ async function hydrateBatch(items){
   return out;
 }
 
-// ============ FEED STATE ============
 async function loadFeed(){
   feedBusy=true;
   const title=$('#feedTitle'),sub=$('#feedSub');
@@ -938,7 +894,6 @@ function patchPrices(){
   document.querySelectorAll('[data-age]').forEach(el=>{const c=+el.dataset.c||0;el.textContent=fmtAge(c)});
 }
 
-// ============ TABS ============
 $$('#feedTabs .tab').forEach(t=>t.classList.toggle('active',t.dataset.t===feedMode));
 $('#feedTabs').onclick=e=>{
   const t=e.target.closest('.tab');if(!t)return;
@@ -960,7 +915,6 @@ function toggleWatch(id){
   if(feedMode==='watch')loadFeed();
 }
 
-// ============ SEARCH ============
 let sTimer;
 $('#searchIn').oninput=e=>{
   clearTimeout(sTimer);
@@ -987,7 +941,6 @@ $('#searchIn').oninput=e=>{
 };
 document.onclick=e=>{if(!e.target.closest('.search'))$('#searchDD').classList.remove('open')};
 
-// ============ SELECT TOKEN ============
 async function selectToken(t){
   sel=t;save(K+'sel',t);
   $$('.token-row').forEach(r=>r.classList.toggle('active',r.dataset.id===tokId(t)));
@@ -998,7 +951,6 @@ async function selectToken(t){
   updateTradeForm();
   drawChart();
   $('#chartEmpty').classList.add('hidden');
-  // Refresh full data
   try{
     const j=await getJSON(`${DS}/latest/dex/tokens/${t.address}`);
     const pairs=(j.pairs||[]).filter(p=>p.chainId===t.chain);
@@ -1038,8 +990,7 @@ function renderCoinHead(){
   const sc=$('#stChg');sc.textContent=fmtPct(sel.chg24h);sc.className='v '+(sel.chg24h==null?'':cls(sel.chg24h));
 }
 
-// ============ CHART (line chart from real price history) ============
-const TFS=[{k:'5m',ms:5*60000},{k:'15m',ms:15*60000},{k:'1h',ms:60*60000},{k:'4h',ms:4*3600000},{k:'1D',ms:24*3600000}];
+const TFS=[{k:'30s',ms:30000},{k:'1m',ms:60000},{k:'5m',ms:300000},{k:'15m',ms:900000},{k:'30m',ms:1800000},{k:'1h',ms:3600000},{k:'4h',ms:14400000},{k:'1D',ms:86400000}];
 const chart={cv:$('#chart'),ctx:$('#chart').getContext('2d'),w:0,h:0,mouse:null,PR:70,PB:24,PT:14,PL:10};
 function resize(){
   const r=$('#chartWrap').getBoundingClientRect(),dpr=window.devicePixelRatio||1;
@@ -1062,7 +1013,7 @@ function drawChart(){
   if(hist.length<3)hist=priceHist[id]||[];
   if(hist.length<2){
     $('#chartEmpty').classList.remove('hidden');
-    $('#chartEmpty').innerHTML='<div class="em">◌</div><div>Building live price data…</div><div style="font-size:10px;color:var(--faint);margin-top:4px">Chart updates every 8 seconds</div>';
+    $('#chartEmpty').innerHTML='<div class="em">◌</div><div>Building live price data…</div><div style="font-size:10px;color:var(--faint);margin-top:4px">Chart updates every 3 seconds</div>';
     return;
   }
   $('#chartEmpty').classList.add('hidden');
@@ -1074,12 +1025,10 @@ function drawChart(){
   const Y=p=>PT+(max-p)/(max-min)*pH;
   const t0=hist[0].t,t1=hist[n-1].t,span=t1-t0||1;
   const X=p=>PL+((p.t-t0)/span)*pW;
-  // Watermark
   ctx.fillStyle='rgba(167,139,250,.05)';
   ctx.font='700 '+Math.min(120,pW/5)+'px Inter';
   ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText(sel.symbol.toUpperCase(),PL+pW/2,PT+pH/2);
-  // Grid
   ctx.font='10px JetBrains Mono';ctx.textAlign='left';ctx.textBaseline='middle';
   const step=niceStep(max-min,6);
   for(let p=Math.ceil(min/step)*step;p<max;p+=step){
@@ -1088,7 +1037,6 @@ function drawChart(){
     ctx.beginPath();ctx.moveTo(PL,y);ctx.lineTo(w-PR,y);ctx.stroke();
     ctx.fillStyle='#6b658a';ctx.fillText(fmtAxis(p),w-PR+8,y);
   }
-  // Time axis
   ctx.textAlign='center';ctx.textBaseline='top';
   const tstep=Math.max(1,Math.floor(n/6));
   for(let i=Math.floor(tstep/2);i<n;i+=tstep){
@@ -1098,11 +1046,9 @@ function drawChart(){
     ctx.strokeStyle='rgba(167,139,250,.05)';
     ctx.beginPath();ctx.moveTo(x,PT);ctx.lineTo(x,h-PB);ctx.stroke();
   }
-  // Trend color
   const up=hist[n-1].p>=hist[0].p;
   const lineCol=up?'#4ade80':'#f87171';
   const rgb=up?'74,222,128':'248,113,113';
-  // Area gradient
   const grad=ctx.createLinearGradient(0,PT,0,h-PB);
   grad.addColorStop(0,`rgba(${rgb},.25)`);
   grad.addColorStop(1,`rgba(${rgb},0)`);
@@ -1110,27 +1056,21 @@ function drawChart(){
   ctx.beginPath();ctx.moveTo(X(hist[0]),h-PB);
   hist.forEach(p=>ctx.lineTo(X(p),Y(p.p)));
   ctx.lineTo(X(hist[n-1]),h-PB);ctx.closePath();ctx.fill();
-  // Glow
   ctx.strokeStyle=`rgba(${rgb},.35)`;ctx.lineWidth=6;ctx.lineJoin='round';
   ctx.beginPath();hist.forEach((p,i)=>{const x=X(p),y=Y(p.p);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)});ctx.stroke();
-  // Line
   ctx.strokeStyle=lineCol;ctx.lineWidth=2;
   ctx.beginPath();hist.forEach((p,i)=>{const x=X(p),y=Y(p.p);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)});ctx.stroke();
-  // Last price marker + dashed line
   const last=hist[n-1].p,ly=Y(last),lx=X(last);
   ctx.setLineDash([4,4]);ctx.strokeStyle=lineCol;ctx.globalAlpha=.5;ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(PL,ly);ctx.lineTo(w-PR,ly);ctx.stroke();
   ctx.setLineDash([]);ctx.globalAlpha=1;
-  // Price tag
   ctx.fillStyle=lineCol;
   ctx.fillRect(w-PR+4,ly-10,PR-8,20);
   ctx.fillStyle=up?'#052e16':'#fff';
   ctx.font='700 10px JetBrains Mono';ctx.textAlign='left';ctx.textBaseline='middle';
   ctx.fillText(fmtAxis(last),w-PR+10,ly);
-  // Dot
   ctx.fillStyle=lineCol;ctx.beginPath();ctx.arc(lx,ly,5,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#0a0614';ctx.beginPath();ctx.arc(lx,ly,2,0,Math.PI*2);ctx.fill();
-  // Crosshair
   if(chart.mouse){
     const mx=chart.mouse.x,my=chart.mouse.y;
     if(mx>PL&&mx<w-PR&&my>PT&&my<h-PB){
@@ -1144,7 +1084,6 @@ function drawChart(){
       const pv=max-(my-PT)/pH*(max-min);
       ctx.fillStyle='rgba(36,24,66,.95)';ctx.fillRect(w-PR+4,my-10,PR-8,20);
       ctx.fillStyle='#f0ecff';ctx.fillText(fmtAxis(pv),w-PR+10,my);
-      // Hover dot
       ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx,cy,6,0,Math.PI*2);ctx.fill();
       ctx.fillStyle=lineCol;ctx.beginPath();ctx.arc(cx,cy,3.5,0,Math.PI*2);ctx.fill();
       showTip(p,cx,cy);updateOhlc(p,hist);
@@ -1185,12 +1124,12 @@ function recordPrice(id,p){
   if(!isFinite(p)||p<=0)return;
   if(!priceHist[id])priceHist[id]=[];
   const arr=priceHist[id],last=arr[arr.length-1],now=Date.now();
-  if(last&&now-last.t<5000&&Math.abs(p-last.p)/last.p<0.0005)return;
+  // Record every poll (3s) but skip if exact same price within 1.5s
+  if(last&&now-last.t<1500&&p===last.p)return;
   arr.push({t:now,p});
-  if(arr.length>800)arr.shift();
+  if(arr.length>1000)arr.shift();
 }
 
-// ============ TRADING ============
 function curPrice(){if(!sel)return null;const t=tokens[tokId(sel)];return t?t.price:sel.price}
 function posValue(){let v=0,c=0;for(const id in wallet.pos){const p=wallet.pos[id],t=tokens[id],pr=t?t.price:p.avg;v+=p.qty*pr;c+=p.qty*p.avg}return{v,c}}
 const equity=()=>wallet.cash+posValue().v;
@@ -1301,7 +1240,6 @@ $('#resetBtn').onclick=()=>{
   toast('info','↻ Wallet reset to '+fmtUsd(START_CASH));
 };
 
-// ============ COPY TRADING (HONEST — you watch externally, one-click ape) ============
 function renderCopy(){
   const box=$('#rbody');
   const sym=sel?sel.symbol.toUpperCase():null;
@@ -1387,7 +1325,6 @@ function renderCopy(){
   });
 }
 
-// ============ RIGHT TABS ============
 function renderRight(){
   if(rightTab==='pos')renderPositions();
   else if(rightTab==='hist')renderHistory();
@@ -1409,7 +1346,6 @@ function toast(type,html){
   setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),250)},4000);
 }
 
-// ============ POLLING ============
 async function pollPrices(){
   if(pollBusy)return;pollBusy=true;
   try{
@@ -1450,12 +1386,11 @@ async function pollPrices(){
   pollBusy=false;
 }
 async function refreshFeed(){if(feedBusy||feedMode==='watch')return;await loadFeed()}
-setInterval(pollPrices,8000);
+setInterval(pollPrices,3000);
 setInterval(refreshFeed,90000);
 setInterval(()=>{$('#sbClock').textContent=fmtClock(Date.now())},1000);
 setInterval(patchPrices,5000);
 
-// ============ BOOT ============
 async function boot(){
   $('#rows').innerHTML=Array.from({length:10},()=>'<div style="height:60px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,transparent,rgba(167,139,250,.04),transparent);background-size:200% 100%;animation:shim 1.5s infinite"></div>').join('');
   const style=document.createElement('style');style.textContent='@keyframes shim{from{background-position:200% 0}to{background-position:-200% 0}}';document.head.appendChild(style);
@@ -1466,7 +1401,7 @@ async function boot(){
     else if(feedTokens[0])selectToken(feedTokens[0]);
     renderRight();renderPortfolio();
     if(feedTokens.length){
-      toast('success','◉ Trench live · <b>'+feedTokens.length+' tokens</b><br><span style="color:var(--dim);font-size:11px">Paper '+fmtUsd(START_CASH)+' · DexScreener feed</span>');
+      toast('success','◉ Trenchh live · <b>'+feedTokens.length+' tokens</b><br><span style="color:var(--dim);font-size:11px">Paper '+fmtUsd(START_CASH)+' · DexScreener feed</span>');
     }
   }catch(e){
     console.error('Boot error:',e);
