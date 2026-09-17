@@ -6,35 +6,37 @@ const ALLOW = new Set([
 ]);
 
 export default async function handler(req, res) {
-  // Handle CORS preflight
+  // CORS preflight
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
-  }
+  if (req.method === 'OPTIONS') return res.status(204).end();
 
   const url = req.query.url;
-  if (!url) {
-    return res.status(400).json({ error: 'Missing url parameter' });
+  if (!url || typeof url !== 'string') {
+    return res.status(400).json({ error: 'missing url param' });
+  }
+
+  let parsed;
+  try { parsed = new URL(url); } catch {
+    return res.status(400).json({ error: 'invalid url' });
+  }
+
+  if (parsed.protocol !== 'https:' || !ALLOW.has(parsed.hostname)) {
+    return res.status(403).json({ error: 'host not allowed: ' + parsed.hostname });
   }
 
   try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== 'https:' || !ALLOW.has(parsed.hostname)) {
-      return res.status(403).json({ error: 'Host not allowed', host: parsed.hostname });
-    }
-
-    const response = await fetch(url, {
-      headers: { 'Accept': 'application/json', 'User-Agent': 'TRENCHH/1.0' }
+    const upstream = await fetch(parsed.href, {
+      headers: { 'Accept': 'application/json', 'User-Agent': 'TRENCHH/1.0' },
+      signal: AbortSignal.timeout(12000)
     });
-
-    const body = await response.text();
-    res.status(response.status)
+    const body = await upstream.text();
+    res.status(upstream.status)
        .setHeader('Content-Type', 'application/json')
+       .setHeader('Cache-Control', 'no-store')
        .send(body);
-  } catch (err) {
-    res.status(502).json({ error: err.message });
+  } catch (e) {
+    res.status(502).json({ error: e.message || 'upstream failed' });
   }
 }
