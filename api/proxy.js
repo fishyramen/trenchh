@@ -1,22 +1,40 @@
-const ALLOW = ['api.geckoterminal.com', 'api.gopluslabs.io'];
+const ALLOW = new Set([
+  'api.geckoterminal.com',
+  'api.gopluslabs.io',
+  'frontend-api.pump.fun',
+  'frontend-api-v3.pump.fun'
+]);
 
 export default async function handler(req, res) {
+  // Handle CORS preflight
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', '*');
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+
+  const url = req.query.url;
+  if (!url) {
+    return res.status(400).json({ error: 'Missing url parameter' });
+  }
+
   try {
-    const url = req.query.url;
-    if (!url) return res.status(400).json({ error: 'missing url param' });
-    let u;
-    try { u = new URL(url); } catch (e) { return res.status(400).json({ error: 'bad url' }); }
-    if (u.protocol !== 'https:' || !ALLOW.includes(u.hostname)) {
-      return res.status(400).json({ error: 'host not allowed: ' + u.hostname });
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:' || !ALLOW.has(parsed.hostname)) {
+      return res.status(403).json({ error: 'Host not allowed', host: parsed.hostname });
     }
-    const r = await fetch(u.href, { headers: { accept: 'application/json' } });
-    const body = await r.text();
-    res.status(r.status).setHeader('Content-Type', 'application/json').send(body);
-  } catch (e) {
-    res.status(502).json({ error: String(e && e.message || e) });
+
+    const response = await fetch(url, {
+      headers: { 'Accept': 'application/json', 'User-Agent': 'TRENCHH/1.0' }
+    });
+
+    const body = await response.text();
+    res.status(response.status)
+       .setHeader('Content-Type', 'application/json')
+       .send(body);
+  } catch (err) {
+    res.status(502).json({ error: err.message });
   }
 }
