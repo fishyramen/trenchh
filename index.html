@@ -152,6 +152,9 @@ body.hbg .bar,body.hbg .pn,body.hbg .bpn{background:rgba(15,10,26,.87)}
 .csrc{position:absolute;top:6px;left:8px;z-index:6;font-size:7px;color:var(--fn);background:rgba(17,11,31,.8);padding:2px 6px;border-radius:4px;border:1px solid var(--ln);pointer-events:none;font-family:var(--mo)}
 .nct{position:absolute;top:6px;right:70px;z-index:6;font-size:8px;color:var(--dm);background:rgba(17,11,31,.85);padding:3px 8px;border-radius:4px;border:1px solid var(--ln);pointer-events:none;font-family:var(--mo);font-weight:600}
 .nct b{color:var(--ac2)}
+.diag{position:absolute;top:26px;left:8px;z-index:7;font-family:var(--mo);font-size:8.5px;line-height:1.7;color:var(--dm);background:rgba(17,11,31,.92);padding:8px 10px;border-radius:6px;border:1px solid var(--ln2);display:none;max-width:70%;white-space:pre-wrap}
+.diag.op{display:block}
+.diag .ok{color:var(--gn)}.diag .bad{color:var(--rd)}
 .ctip{position:absolute;pointer-events:none;background:var(--p3);border:1px solid var(--ln2);border-radius:6px;padding:6px 9px;font-size:10px;line-height:1.5;z-index:10;display:none;font-family:var(--mo);box-shadow:0 6px 18px rgba(0,0,0,.5)}
 .ctip .tt{font-size:7px;color:var(--fn);font-family:var(--ui);font-weight:700;text-transform:uppercase;margin-bottom:2px}
 .cemp{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--fn);font-size:10px;text-align:center;pointer-events:none;z-index:5}
@@ -347,7 +350,7 @@ input[type=range]{accent-color:var(--ac);width:110px}
       <div class="grp" id="tyG"><button class="gbtn on" data-ty="candles">Candles</button><button class="gbtn" data-ty="line">Line</button><button class="gbtn" data-ty="area">Area</button></div>
       <div class="grp" id="ovG"><button class="gbtn on" data-ov="vol">Vol</button><button class="gbtn" data-ov="ema">EMA20</button></div>
       <div class="grp" id="axG"><button class="gbtn on" data-ax="price">Price</button><button class="gbtn" data-ax="mcap">MCap</button></div>
-      <div class="grp"><button class="gbtn" id="zIn">+</button><button class="gbtn" id="zOut">−</button><button class="gbtn" id="zFit">Fit</button></div>
+      <div class="grp"><button class="gbtn" id="zIn">+</button><button class="gbtn" id="zOut">−</button><button class="gbtn" id="zFit">Fit</button><button class="gbtn" id="hRef" title="Force reload history">⟳H</button><button class="gbtn" id="dTog" title="Diagnostics">ⓘ</button></div>
       <div class="leg" id="leg"></div>
       <span class="liv"><span class="d"></span><span id="livT">LIVE</span></span>
     </div>
@@ -355,6 +358,7 @@ input[type=range]{accent-color:var(--ac);width:110px}
       <canvas id="cv"></canvas>
       <div class="csrc hd" id="cSrc"></div>
       <div class="nct hd" id="ncT"></div>
+      <div class="diag" id="diag"></div>
       <div class="ctip" id="cTip"></div>
       <div class="cemp hd" id="cEmp"><div class="spin"></div><div class="b">Loading…</div></div>
     </div>
@@ -415,7 +419,7 @@ input[type=range]{accent-color:var(--ac);width:110px}
 <script>
 'use strict';
 const DS='https://api.dexscreener.com',GT='https://api.geckoterminal.com/api/v2',GP='https://api.gopluslabs.io/api/v1';
-const START=10000,K='thC.';
+const START=10000,K='thD.';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const ld=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}};
 const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
@@ -434,8 +438,9 @@ let sec=null,tradesL=[],tradersAgg=[];
 let busyPoll=false,busyTrades=false,baseBusy=false;
 let orderMode='market',side='buy';
 let bpnH=ld(K+'bpn',224);
+let ROUTE_STAT={},HIST_ERR='';
 const tId=t=>t.chain+':'+t.address;
-const SUB='₀₁₂₃₄₆₇₈₉',sN=n=>String(n).split('').map(c=>SUB[+c]||c).join('');
+const SUB='₀₁₂₃₄₅₆₇₈₉',sN=n=>String(n).split('').map(c=>SUB[+c]||c).join('');
 function fP(p,h){if(!isFinite(p)||p<=0)return'—';if(p>=1000)return'$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});if(p>=1)return'$'+p.toFixed(p>=100?2:4);const z=Math.max(0,Math.ceil(-Math.log10(p))-1);if(z<2)return'$'+p.toFixed(z+4);const s=String(Math.round(p*Math.pow(10,z+4)));return h?'$0.0<sub>'+z+'</sub>'+s:'$0.0'+sN(z)+s}
 function fAx(p){if(!isFinite(p))return'';if(p>=1000)return(p/1000).toFixed(1)+'k';if(p>=1)return p.toFixed(p>=100?1:4);return parseFloat(p.toPrecision(3)).toString()}
 function fU(n){if(!isFinite(n))return'—';const s=n<0?'-':'';n=Math.abs(n);return s+'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
@@ -452,27 +457,34 @@ const pf=v=>{const x=parseFloat(v);return isFinite(x)?x:null};
 const chNm=c=>({solana:'Solana',base:'Base',eth:'Ethereum',ethereum:'Ethereum',bsc:'BSC',blast:'Blast',arbitrum:'Arbitrum',sui:'Sui'}[c]||'—');
 const chSh=c=>({solana:'SOL',base:'BASE',eth:'ETH',ethereum:'ETH',bsc:'BSC',blast:'BLAST',arbitrum:'ARB',sui:'SUI'}[c]||'?');
 const gNet=c=>c==='ethereum'?'eth':c;
-function sStat(m,ok=true){$('#sbSt').textContent=m;$('#sbD').classList.toggle('er',!ok)}
 function toast(t,h){const e=document.createElement('div');e.className='toast'+(t==='err'?' err':t==='warn'?' warn':'');e.innerHTML=h;$('#toasts').appendChild(e);setTimeout(()=>{e.classList.add('out');setTimeout(()=>e.remove(),220)},4500)}
 let AC=null;
 function beep(f,d=0.09,n=1){if(!SET.sound)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();for(let i=0;i<n;i++){const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(.12,AC.currentTime+i*.12);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+i*.12+d);o.connect(g);g.connect(AC.destination);o.start(AC.currentTime+i*.12);o.stop(AC.currentTime+i*.12+d)}}catch(e){}}
-/* fetch + routes */
-const ROUTES=[{n:'your-proxy',b:u=>'/api/proxy?url='+encodeURIComponent(u)},{n:'allorigins',b:u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)},{n:'codetabs',b:u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)},{n:'direct',b:u=>u}];
+/* ===== ROUTES + DIAG ===== */
+const ROUTES=[{n:'your-proxy',b:u=>'/api/proxy?url='+encodeURIComponent(u)},{n:'allorigins',b:u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)},{n:'allorigins-json',b:u=>'https://api.allorigins.win/get?url='+encodeURIComponent(u)},{n:'codetabs',b:u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)},{n:'direct',b:u=>u}];
 let routeI=ld(K+'ri',0);
-const sRoute=()=>{$('#sbRoute').textContent='route:'+ROUTES[routeI].n};sRoute();
-async function fj(url,to=9000){const c=new AbortController(),t=setTimeout(()=>c.abort(),to);try{const r=await fetch(url,{signal:c.signal});if(r.status===429){const e=new Error('rate');e.rate=true;throw e}if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}finally{clearTimeout(t)}}
-async function rf(url,to){let le=null;const sep=url.includes('?')?'&':'?',bu=url+sep+'_cb='+Date.now();for(let i=0;i<ROUTES.length;i++){const idx=(routeI+i)%ROUTES.length;try{const d=await fj(ROUTES[idx].b(bu),to);if(idx!==routeI){routeI=idx;sv(K+'ri',idx);sRoute()}return d}catch(e){le=e;if(e.rate)break}}throw le||new Error('routes failed')}
-/* normalize */
+const sRoute=()=>{$('#sbRoute').textContent='route:'+ROUTES[routeI].n+(ROUTE_STAT[ROUTES[routeI].n]==='ok'?'':' ('+(ROUTE_STAT[ROUTES[routeI].n]||'untested')+')')};
+async function fjRaw(url,to=9000){const c=new AbortController(),t=setTimeout(()=>c.abort(),to);try{const r=await fetch(url,{signal:c.signal});if(r.status===429){const e=new Error('rate');e.rate=true;throw e}if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}finally{clearTimeout(t)}}
+async function fj(url,to){
+  if(url.includes('allorigins.win/get?')){const w=await fjRaw(url,to);if(w&&typeof w.contents==='string')return JSON.parse(w.contents);throw new Error('bad wrap')}
+  return fjRaw(url,to);
+}
+async function rf(url,to){let le=null;const sep=url.includes('?')?'&':'?',bu=url+sep+'_cb='+Date.now();for(let i=0;i<ROUTES.length;i++){const idx=(routeI+i)%ROUTES.length;const nm=ROUTES[idx].n;try{const d=await fj(ROUTES[idx].b(bu),to);ROUTE_STAT[nm]='ok';if(idx!==routeI){routeI=idx;sv(K+'ri',idx);sRoute()}return d}catch(e){le=e;ROUTE_STAT[nm]=(e.message||'err').slice(0,24);if(e.rate)break}}throw le||new Error('routes failed')}
+async function probeRoutes(){const test=GT+'/networks/solana/new_pools?page=1';for(let i=0;i<ROUTES.length;i++){const nm=ROUTES[i].n;if(ROUTE_STAT[nm]==='ok')continue;try{await fj(ROUTES[i].b(test),7000);ROUTE_STAT[nm]='ok';if(nm==='your-proxy'||ROUTE_STAT[ROUTES[routeI].n]!=='ok'){routeI=i;sv(K+'ri',i)}}catch(e){ROUTE_STAT[nm]=(e.message||'err').slice(0,24)}}sRoute();renderDiag()}
+function renderDiag(){const el=$('#diag');if(!el.classList.contains('op'))return;const lines=[];lines.push('ROUTES:');ROUTES.forEach(r=>{const s=ROUTE_STAT[r.n]||'untested';lines.push('  '+r.n+': '+(s==='ok'?'<span class="ok">ok</span>':'<span class="bad">'+esc(s)+'</span>'))});lines.push('BASES: 1m='+(CH['1m']||[]).length+'('+(histSrc['1m']||'-')+') 1H='+(CH['1H']||[]).length+'('+(histSrc['1H']||'-')+')');lines.push('TFS: '+TFS.map(t=>t.k+':'+(CH[t.k]||[]).length).join(' '));if(HIST_ERR)lines.push('LAST ERR: '+esc(HIST_ERR.slice(0,90)));lines.push('pool: '+esc(sel?sel.pair||'MISSING':'-')+' chain:'+esc(sel?gNet(sel.chain):'-'));el.innerHTML=lines.join('\n')}
+$('#dTog').onclick=()=>{$('#diag').classList.toggle('op');renderDiag()};
+$('#hRef').onclick=()=>{if(!sel)return;tfTs={};HIST_ERR='';toast('info','Reloading history…');fetchBases(sel)};
+/* ===== NORMALIZE ===== */
 function nDS(p){return{chain:p.chainId,address:p.baseToken.address,symbol:p.baseToken.symbol||'???',name:p.baseToken.name||p.baseToken.symbol||'???',quote:p.quoteToken?.symbol||'USD',image:p.info?.imageUrl||null,price:pf(p.priceUsd)||0,c5:pf(p.priceChange?.m5),c1:pf(p.priceChange?.h1),c24:pf(p.priceChange?.h24),v24:pf(p.volume?.h24)||0,v1h:pf(p.volume?.h1)||0,liq:pf(p.liquidity?.usd)||0,fdv:pf(p.fdv)||0,mcap:pf(p.marketCap)||pf(p.fdv)||0,b24:p.txns?.h24?.buys||0,s24:p.txns?.h24?.sells||0,created:p.pairCreatedAt||0,pair:p.pairAddress,dex:p.dexId,url:p.url,boosts:p.boosts||0}}
 function nGT(p,inc){const a=p.attributes||{};let net=a.network||p.relationships?.network?.data?.id||'';if(!net&&typeof p.id==='string'&&p.id.includes('_'))net=p.id.split('_')[0];const rb=p.relationships?.base_token?.data,tk=rb?(inc||[]).find(x=>x.id===rb.id):null;let ta='';if(rb&&typeof rb.id==='string'&&rb.id.includes('_'))ta=rb.id.split('_').slice(1).join('_');if(!ta)ta=tk?.attributes?.address||a.address||'';const nm=a.name||'???';return{chain:net,address:ta,symbol:tk?.attributes?.symbol||nm.split(' / ')[0],name:tk?.attributes?.name||nm.split(' / ')[0],quote:nm.split(' / ')[1]||'',image:tk?.attributes?.image_url||null,price:pf(a.base_token_price_usd)||0,c5:pf(a.price_change_percentage?.m5),c1:pf(a.price_change_percentage?.h1),c24:pf(a.price_change_percentage?.h24),v24:pf(a.volume_usd?.h24)||0,v1h:pf(a.volume_usd?.h1)||0,liq:pf(a.reserve_in_usd)||0,fdv:pf(a.fdv_usd)||0,mcap:pf(a.market_cap_usd)||pf(a.fdv_usd)||0,b24:a.transactions?.h24?.buys||0,s24:a.transactions?.h24?.sells||0,created:a.pool_created_at?Date.parse(a.pool_created_at):0,pair:a.address||'',dex:a.dexId||'',url:null,boosts:0}}
 function qRisk(t){let s=0;if(t.liq<1000)s+=45;else if(t.liq<10000)s+=22;if(t.b24>=15&&t.s24===0)s+=30;if(t.created&&Date.now()-t.created<3600000&&t.liq<5000)s+=15;if(t.c24!=null&&t.c24<-70)s+=15;return s}
 function momScore(t){return(t.c5||0)*3+(t.c1||0)*1.5+((t.v1h||0)/Math.max(1,(t.v24||1)/24))*2}
-/* feeds */
-async function dsHydrate(items){const out={},by={};items.forEach(i=>{(by[i.chainId]=by[i.chainId]||[]).push(i)});for(const c in by){const L=by[c];for(let i=0;i<L.length;i+=30){const b=L.slice(i,i+30);try{const j=await fj(DS+'/latest/dex/tokens/'+b.map(x=>x.address).join(','));const sn=new Set();(j.pairs||[]).forEach(p=>{const t=nDS(p);if(sn.has(t.address))return;sn.add(t.address);const src=b.find(x=>x.address===t.address);if(src?.icon&&!t.image)t.image=src.icon;out[tId(t)]=t;TOK[tId(t)]=t})}catch(e){}await new Promise(r=>setTimeout(r,40))}}return out}
+/* ===== FEEDS ===== */
+async function dsHydrate(items){const out={},by={};items.forEach(i=>{(by[i.chainId]=by[i.chainId]||[]).push(i)});for(const c in by){const L=by[c];for(let i=0;i<L.length;i+=30){const b=L.slice(i,i+30);try{const j=await fjRaw(DS+'/latest/dex/tokens/'+b.map(x=>x.address).join(','));const sn=new Set();(j.pairs||[]).forEach(p=>{const t=nDS(p);if(sn.has(t.address))return;sn.add(t.address);const src=b.find(x=>x.address===t.address);if(src?.icon&&!t.image)t.image=src.icon;out[tId(t)]=t;TOK[tId(t)]=t})}catch(e){}await new Promise(r=>setTimeout(r,40))}}return out}
 function putB(m,t){if(!t.address||!t.price)return;const id=tId(t),o=m.get(id);if(!o||t.liq>o.liq)m.set(id,t)}
-async function feedTrenches(){const chs=['solana','base','eth','bsc'],m=new Map();let gw=false;const res=await Promise.allSettled(chs.map(c=>rf(GT+'/networks/'+c+'/new_pools?page=1&include=base_token',10000)));res.forEach(r=>{if(r.status==='fulfilled'){gw=true;(r.value.data||[]).forEach(p=>putB(m,nGT(p,r.value.included)))}});try{const j=await fj(DS+'/token-profiles/latest/v1');const arr=(j||[]).filter(x=>x.chainId&&x.tokenAddress).slice(0,60);const mm=await dsHydrate(arr.map(x=>({chainId:x.chainId,address:x.tokenAddress,icon:x.icon})));Object.values(mm).forEach(t=>putB(m,t))}catch(e){}const list=[...m.values()].sort((a,b)=>(b.created||0)-(a.created||0)).slice(0,250);const first=seenTrench.size===0;list.forEach(t=>{const id=tId(t);if(!seenTrench.has(id)){if(!first)t._fresh=true;seenTrench.add(id)}TOK[id]=t});return{list,gw}}
-async function feedTrending(){const chs=['solana','base','eth','bsc'],m=new Map();const res=await Promise.allSettled(chs.map(c=>rf(GT+'/networks/'+c+'/trending_pools?page=1&include=base_token',10000)));res.forEach(r=>{if(r.status==='fulfilled')(r.value.data||[]).forEach(p=>putB(m,nGT(p,r.value.included)))});let list=[...m.values()].filter(t=>(t.v1h||0)>3000&&(t.c24==null||t.c24>-90));list.forEach(t=>{TOK[tId(t)]=t;t._mom=momScore(t)});list.sort((a,b)=>b._mom-a._mom);if(list.length<10){try{const j=await fj(DS+'/token-boosts/top/v1');const arr=(j||[]).filter(x=>x.chainId&&x.tokenAddress);const mm=await dsHydrate(arr.map(x=>({chainId:x.chainId,address:x.tokenAddress,icon:x.icon})));list=list.concat(Object.values(mm).filter(t=>(t.c24||0)>10))}catch(e){}}return list.slice(0,200)}
-async function feedGainers(){const m=new Map(),chs=['solana','base','eth','bsc'];const res=await Promise.allSettled(chs.map(c=>rf(GT+'/networks/'+c+'/pools?page=1&sort=h24_volume_usd_desc&include=base_token',10000)));res.forEach(r=>{if(r.status==='fulfilled')(r.value.data||[]).forEach(p=>putB(m,nGT(p,r.value.included)))});if(m.size<5){try{const j=await fj(DS+'/token-boosts/latest/v1');const arr=(j||[]).filter(x=>x.chainId&&x.tokenAddress);const mm=await dsHydrate(arr.map(x=>({chainId:x.chainId,address:x.tokenAddress})));Object.values(mm).forEach(t=>putB(m,t))}catch(e){}}const list=[...m.values()].filter(t=>(t.c24==null||t.c24>-95));list.sort((a,b)=>(b.c24??-9e9)-(a.c24??-9e9));list.forEach(t=>TOK[tId(t)]=t);return list}
+async function feedTrenches(){const chs=['solana','base','eth','bsc'],m=new Map();let gw=false;const res=await Promise.allSettled(chs.map(c=>rf(GT+'/networks/'+c+'/new_pools?page=1&include=base_token',10000)));res.forEach(r=>{if(r.status==='fulfilled'){gw=true;(r.value.data||[]).forEach(p=>putB(m,nGT(p,r.value.included)))}});try{const j=await fjRaw(DS+'/token-profiles/latest/v1');const arr=(j||[]).filter(x=>x.chainId&&x.tokenAddress).slice(0,60);const mm=await dsHydrate(arr.map(x=>({chainId:x.chainId,address:x.tokenAddress,icon:x.icon})));Object.values(mm).forEach(t=>putB(m,t))}catch(e){}const list=[...m.values()].sort((a,b)=>(b.created||0)-(a.created||0)).slice(0,250);const first=seenTrench.size===0;list.forEach(t=>{const id=tId(t);if(!seenTrench.has(id)){if(!first)t._fresh=true;seenTrench.add(id)}TOK[id]=t});return{list,gw}}
+async function feedTrending(){const chs=['solana','base','eth','bsc'],m=new Map();const res=await Promise.allSettled(chs.map(c=>rf(GT+'/networks/'+c+'/trending_pools?page=1&include=base_token',10000)));res.forEach(r=>{if(r.status==='fulfilled')(r.value.data||[]).forEach(p=>putB(m,nGT(p,r.value.included)))});let list=[...m.values()].filter(t=>(t.v1h||0)>3000&&(t.c24==null||t.c24>-90));list.forEach(t=>{TOK[tId(t)]=t;t._mom=momScore(t)});list.sort((a,b)=>b._mom-a._mom);if(list.length<10){try{const j=await fjRaw(DS+'/token-boosts/top/v1');const arr=(j||[]).filter(x=>x.chainId&&x.tokenAddress);const mm=await dsHydrate(arr.map(x=>({chainId:x.chainId,address:x.tokenAddress,icon:x.icon})));list=list.concat(Object.values(mm).filter(t=>(t.c24||0)>10))}catch(e){}}return list.slice(0,200)}
+async function feedGainers(){const m=new Map(),chs=['solana','base','eth','bsc'];const res=await Promise.allSettled(chs.map(c=>rf(GT+'/networks/'+c+'/pools?page=1&sort=h24_volume_usd_desc&include=base_token',10000)));res.forEach(r=>{if(r.status==='fulfilled')(r.value.data||[]).forEach(p=>putB(m,nGT(p,r.value.included)))});if(m.size<5){try{const j=await fjRaw(DS+'/token-boosts/latest/v1');const arr=(j||[]).filter(x=>x.chainId&&x.tokenAddress);const mm=await dsHydrate(arr.map(x=>({chainId:x.chainId,address:x.tokenAddress})));Object.values(mm).forEach(t=>putB(m,t))}catch(e){}}const list=[...m.values()].filter(t=>(t.c24==null||t.c24>-95));list.sort((a,b)=>(b.c24??-9e9)-(a.c24??-9e9));list.forEach(t=>TOK[tId(t)]=t);return list}
 async function feedWatch(){const items=watch.map(id=>({chainId:id.split(':')[0],address:id.split(':')[1]}));const m=await dsHydrate(items);const list=Object.values(m);watch.forEach(id=>{if(!list.find(t=>tId(t)===id)&&TOK[id])list.push(TOK[id])});return list}
 const FAGE={trenches:20000,trending:25000,gainers:60000,watch:45000};
 async function refreshFeed(mode,force){const c=feedCache[mode];if(!force&&c.d.length&&Date.now()-c.ts<FAGE[mode])return c.d;try{let list,src='';if(mode==='trenches'){const r=await feedTrenches();list=r.list;src=r.gw?'live new pairs':'dexscreener fallback'}else if(mode==='trending')list=await feedTrending();else if(mode==='gainers')list=await feedGainers();else list=await feedWatch();feedCache[mode]={d:list,ts:Date.now(),src};return list}catch(e){return c.d}}
@@ -491,9 +503,9 @@ $('#advBtn').onclick=()=>$('#advF').classList.toggle('op');
 $('#fSafe').onchange=()=>renderList();
 /* search */
 const isEv=q=>/^0x[a-fA-F0-9]{40}$/.test(q),isSo=q=>/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(q);
-let sTm;$('#srchIn').oninput=e=>{clearTimeout(sTm);const q=e.target.value.trim(),dd=$('#srchDD');if(q.length<2){dd.classList.remove('open');return}sTm=setTimeout(async()=>{dd.classList.add('open');dd.innerHTML='<div class="emp">Searching…</div>';let wh='';if(isEv(q)||isSo(q)){const wc=isEv(q)?'ethereum':'solana';wh=`<div class="swal"><div class="wl">Wallet · ${chNm(wc)}</div><div class="ad">${esc(q)}</div><div class="ac"><button class="mi go" data-track="${esc(q)}|${wc}">+ Track</button><a class="mi" target="_blank" href="https://gmgn.ai/${wc}/address/${q}">GMGN</a><a class="mi" target="_blank" href="${wc==='solana'?'https://solscan.io/account/':'https://etherscan.io/address/'}${q}">Explorer</a></div></div>`}let res=[];try{if(isEv(q)||isSo(q)){const j=await fj(DS+'/latest/dex/tokens/'+q);res=(j.pairs||[]).map(nDS)}if(!res.length){const j=await fj(DS+'/latest/dex/search?q='+encodeURIComponent(q));res=(j.pairs||[]).map(nDS)}}catch(e){}dd.innerHTML=wh+res.slice(0,12).map(t=>{const id=tId(t);TOK[id]=t;return`<div class="sit" data-id="${id}">${t.image?`<img src="${t.image}">`:`<div class="cv">${esc((t.symbol||'?')[0].toUpperCase())}</div>`}<div><div class="sy">${esc(t.symbol.toUpperCase())}</div><div class="nm">${esc(t.name)} · ${chNm(t.chain)}</div></div><div class="pr">${fP(t.price)}</div></div>`}).join('')+(wh||res.length?'':'<div class="emp">No results</div>');dd.querySelectorAll('.sit').forEach(r=>r.onclick=()=>{const t=TOK[r.dataset.id];if(t){selectToken(t);dd.classList.remove('open');$('#srchIn').value='';$('#srchIn').blur()}});const tr=dd.querySelector('[data-track]');if(tr)tr.onclick=()=>{const[a,c]=tr.dataset.track.split('|');if(copW.some(w=>w.addr.toLowerCase()===a.toLowerCase())){toast('warn','Already tracked');return}copW.push({addr:a,name:'Wallet '+(copW.length+1),chain:c,size:100,active:true});sv(K+'copw',copW);toast('success','Tracking '+shrt(a));dd.classList.remove('open');$('#srchIn').value='';if(bTab==='copy')renderBottom()}},260)};
+let sTm;$('#srchIn').oninput=e=>{clearTimeout(sTm);const q=e.target.value.trim(),dd=$('#srchDD');if(q.length<2){dd.classList.remove('open');return}sTm=setTimeout(async()=>{dd.classList.add('open');dd.innerHTML='<div class="emp">Searching…</div>';let wh='';if(isEv(q)||isSo(q)){const wc=isEv(q)?'ethereum':'solana';wh=`<div class="swal"><div class="wl">Wallet · ${chNm(wc)}</div><div class="ad">${esc(q)}</div><div class="ac"><button class="mi go" data-track="${esc(q)}|${wc}">+ Track</button><a class="mi" target="_blank" href="https://gmgn.ai/${wc}/address/${q}">GMGN</a><a class="mi" target="_blank" href="${wc==='solana'?'https://solscan.io/account/':'https://etherscan.io/address/'}${q}">Explorer</a></div></div>`}let res=[];try{if(isEv(q)||isSo(q)){const j=await fjRaw(DS+'/latest/dex/tokens/'+q);res=(j.pairs||[]).map(nDS)}if(!res.length){const j=await fjRaw(DS+'/latest/dex/search?q='+encodeURIComponent(q));res=(j.pairs||[]).map(nDS)}}catch(e){}dd.innerHTML=wh+res.slice(0,12).map(t=>{const id=tId(t);TOK[id]=t;return`<div class="sit" data-id="${id}">${t.image?`<img src="${t.image}">`:`<div class="cv">${esc((t.symbol||'?')[0].toUpperCase())}</div>`}<div><div class="sy">${esc(t.symbol.toUpperCase())}</div><div class="nm">${esc(t.name)} · ${chNm(t.chain)}</div></div><div class="pr">${fP(t.price)}</div></div>`}).join('')+(wh||res.length?'':'<div class="emp">No results</div>');dd.querySelectorAll('.sit').forEach(r=>r.onclick=()=>{const t=TOK[r.dataset.id];if(t){selectToken(t);dd.classList.remove('open');$('#srchIn').value='';$('#srchIn').blur()}});const tr=dd.querySelector('[data-track]');if(tr)tr.onclick=()=>{const[a,c]=tr.dataset.track.split('|');if(copW.some(w=>w.addr.toLowerCase()===a.toLowerCase())){toast('warn','Already tracked');return}copW.push({addr:a,name:'Wallet '+(copW.length+1),chain:c,size:100,active:true});sv(K+'copw',copW);toast('success','Tracking '+shrt(a));dd.classList.remove('open');$('#srchIn').value='';if(bTab==='copy')renderBottom()}},260)};
 document.addEventListener('click',e=>{if(!e.target.closest('.srch'))$('#srchDD').classList.remove('open')});
-/* ===== TIMEFRAMES: 2 base fetches + client aggregation ===== */
+/* ===== TIMEFRAMES ===== */
 const TFS=[{k:'1s',b:1000,src:'tick'},{k:'5s',b:5000,src:'tick'},{k:'15s',b:15000,src:'tick'},{k:'30s',b:30000,src:'tick'},{k:'1m',b:60000,src:'gt',tf:'minute',agg:1},{k:'5m',b:300000,src:'agg'},{k:'15m',b:900000,src:'agg'},{k:'30m',b:1800000,src:'agg'},{k:'1H',b:3600000,src:'gt',tf:'hour',agg:1},{k:'4H',b:14400000,src:'agg'},{k:'12H',b:43200000,src:'agg'},{k:'1D',b:86400000,src:'agg'}];
 const tfB=k=>(TFS.find(t=>t.k===k)||{}).b||60000;
 const tfCfg=k=>TFS.find(t=>t.k===k);
@@ -502,20 +514,21 @@ function loadCache(id,tf){try{const v=JSON.parse(localStorage.getItem(ckKey(id,t
 let cacheLRU=ld(K+'clru',[]);
 function saveCache(id,tf,arr){try{localStorage.setItem(ckKey(id,tf),JSON.stringify(arr.slice(-1000)));cacheLRU=cacheLRU.filter(x=>x!==id+'|'+tf);cacheLRU.unshift(id+'|'+tf);while(cacheLRU.length>8){const old=cacheLRU.pop();const[a,b]=old.split('|');localStorage.removeItem(ckKey(a,b))}sv(K+'clru',cacheLRU)}catch(e){}}
 function mergeC(a,b){const m=new Map();(a||[]).forEach(c=>m.set(c.t,c));(b||[]).forEach(c=>m.set(c.t,c));return[...m.values()].sort((x,y)=>x.t-y.t).slice(-1000)}
-function agg(inB,outB){const src=CH['1m']||[];if(outB===3600000&&!src.length&&!(CH['1H']||[]).length)return[];const use=outB<3600000?src:(CH['1H']||[]).length?CH['1H']:src;const inArr=use;const out=[];let cur=null;for(const c of inArr){const b=Math.floor(c.t/outB)*outB;if(!cur||cur.t!==b){if(cur)out.push(cur);cur={t:b,o:c.o,h:c.h,l:c.l,c:c.c,v:c.v||0}}else{cur.h=Math.max(cur.h,c.h);cur.l=Math.min(cur.l,c.l);cur.c=c.c;cur.v+=(c.v||0)}}if(cur)out.push(cur);return out}
+function aggTo(outB){const src1=CH['1m']||[],srcH=CH['1H']||[];const use=outB<3600000?src1:(srcH.length?srcH:src1);const out=[];let cur=null;for(const c of use){const b=Math.floor(c.t/outB)*outB;if(!cur||cur.t!==b){if(cur)out.push(cur);cur={t:b,o:c.o,h:c.h,l:c.l,c:c.c,v:c.v||0}}else{cur.h=Math.max(cur.h,c.h);cur.l=Math.min(cur.l,c.l);cur.c=c.c;cur.v+=(c.v||0)}}if(cur)out.push(cur);return out}
 function deriveAll(){
-  const m1=(CH['1m']||[]).length;
-  if(m1){CH['5m']=agg(60000,300000);CH['15m']=agg(60000,900000);CH['30m']=agg(60000,1800000);histSrc['5m']=histSrc['15m']=histSrc['30m']='agg';histSrc['1m']=histSrc['1m']||'ohlcv'}
-  if(!(CH['1H']||[]).length&&m1){CH['1H']=agg(60000,3600000);histSrc['1H']='agg'}
-  if((CH['1H']||[]).length){CH['4H']=agg(3600000,14400000);CH['12H']=agg(3600000,43200000);CH['1D']=agg(3600000,86400000);histSrc['4H']=histSrc['12H']=histSrc['1D']='agg';histSrc['1H']=histSrc['1H']||'ohlcv'}
-  TFS.forEach(t=>{const b=document.querySelector('#tfG .gbtn:nth-child('+(TFS.indexOf(t)+1)+')');if(b)b.title=t.k+': '+((CH[t.k]||[]).length)+' candles'});
+  if((CH['1m']||[]).length){CH['5m']=aggTo(300000);CH['15m']=aggTo(900000);CH['30m']=aggTo(1800000);histSrc['5m']=histSrc['15m']=histSrc['30m']='agg'}
+  if(!(CH['1H']||[]).length&&(CH['1m']||[]).length){CH['1H']=aggTo(3600000);histSrc['1H']='agg'}
+  if((CH['1H']||[]).length){CH['4H']=aggTo(14400000);CH['12H']=aggTo(43200000);CH['1D']=aggTo(86400000);histSrc['4H']=histSrc['12H']=histSrc['1D']='agg'}
+  TFS.forEach((t,i)=>{const b=$('#tfG').children[i];if(b)b.title=t.k+': '+((CH[t.k]||[]).length)+' candles ('+(histSrc[t.k]||'live')+')'});
+  renderDiag();
 }
-function addTick(p){if(!isFinite(p)||p<=0)return;livePrice=p;const now=Date.now();for(const tf of TFS){const arr=CH[tf.k];if(!arr)continue;const bw=tf.b,b=Math.floor(now/bw)*bw,last=arr[arr.length-1];if(last&&last.t===b){last.c=p;if(p>last.h)last.h=p;if(p<last.l)last.l=p}else if(!last||p!==last.c){arr.push({t:b,o:last?last.c:p,h:p,l:p,c:p,v:0});if(arr.length>1000)arr.shift()}if(!histSrc[tf.k])histSrc[tf.k]='live'}}
-/* base history fetch with retries + raw-trade fallback */
-async function tradesHistory(tok){try{const j=await rf(GT+'/networks/'+gNet(tok.chain)+'/pools/'+tok.pair+'/trades?trade_volume_in_usd_greater_than=0',10000);const list=(j.data||[]).map(d=>{const a=d.attributes||{};return{t:Date.parse(a.timestamp)||0,p:pf(a.base_currency_price_usd)||0,v:pf(a.volume_in_usd)||0}}).filter(x=>x.t&&x.p).sort((a,b)=>a.t-b.t);if(list.length<5)return false;const out=[];for(const x of list){const b=Math.floor(x.t/60000)*60000;const last=out[out.length-1];if(last&&last.t===b){last.c=x.p;last.h=Math.max(last.h,x.p);last.l=Math.min(last.l,x.p);last.v+=x.v}else out.push({t:b,o:x.p,h:x.p,l:x.p,c:x.p,v:x.v})}CH['1m']=mergeC(CH['1m'],out);histSrc['1m']='trades';return true}catch(e){return false}}
+/* tick candles: every poll observation forms/updates the current bucket (flat candles are real) */
+function addTick(p){if(!isFinite(p)||p<=0)return;livePrice=p;const now=Date.now();for(const tf of TFS){const arr=CH[tf.k];if(!arr)continue;const bw=tf.b,b=Math.floor(now/bw)*bw,last=arr[arr.length-1];if(tf.src==='tick'){if(last&&last.t===b){last.c=p;if(p>last.h)last.h=p;if(p<last.l)last.l=p}else{arr.push({t:b,o:last?last.c:p,h:p,l:p,c:p,v:0});if(arr.length>1000)arr.shift()}if(!histSrc[tf.k])histSrc[tf.k]='live'}else{if(last&&last.t===b){last.c=p;if(p>last.h)last.h=p;if(p<last.l)last.l=p}else if(!last){arr.push({t:b,o:p,h:p,l:p,c:p,v:0})}}}}
+async function tradesHistory(tok){try{const j=await rf(GT+'/networks/'+gNet(tok.chain)+'/pools/'+tok.pair+'/trades?trade_volume_in_usd_greater_than=0',10000);const list=(j.data||[]).map(d=>{const a=d.attributes||{};return{t:Date.parse(a.timestamp)||0,p:pf(a.base_currency_price_usd)||0,v:pf(a.volume_in_usd)||0}}).filter(x=>x.t&&x.p).sort((a,b)=>a.t-b.t);if(list.length<5)return false;const out=[];for(const x of list){const b=Math.floor(x.t/60000)*60000;const last=out[out.length-1];if(last&&last.t===b){last.c=x.p;last.h=Math.max(last.h,x.p);last.l=Math.min(last.l,x.p);last.v+=x.v}else out.push({t:b,o:x.p,h:x.p,l:x.p,c:x.p,v:x.v})}CH['1m']=mergeC(CH['1m'],out);histSrc['1m']='trades';return true}catch(e){HIST_ERR='trades-fallback: '+(e.message||e);return false}}
 async function fetchBases(tok){
-  if(!tok||!tok.pair||baseBusy)return;baseBusy=true;
-  let anyOk=false;
+  if(!tok||baseBusy)return;
+  if(!tok.pair){HIST_ERR='no pool address for token';renderDiag();return}
+  baseBusy=true;let anyOk=false;
   for(const k of['1m','1H']){
     const cfg=tfCfg(k),key=tId(tok)+'|'+k;
     if(tfTs[key]&&Date.now()-tfTs[key]<120000&&(CH[k]||[]).length){anyOk=true;continue}
@@ -524,14 +537,14 @@ async function fetchBases(tok){
       try{
         const j=await rf(GT+'/networks/'+gNet(tok.chain)+'/pools/'+tok.pair+'/ohlcv/'+cfg.tf+'?aggregate='+cfg.agg+'&limit='+lim+'&currency=usd',12000);
         const list=(j.data?.attributes?.ohlcv_list||[]).slice().reverse().map(r=>({t:r[0]*1000,o:r[1],h:r[2],l:r[3],c:r[4],v:r[5]||0}));
-        if(list.length){CH[k]=mergeC(CH[k],list);histSrc[k]='ohlcv';tfTs[key]=Date.now();saveCache(tId(tok),k,CH[k]);ok=true;anyOk=true}
-      }catch(e){await new Promise(r=>setTimeout(r,700))}
+        if(list.length){CH[k]=mergeC(CH[k],list);histSrc[k]='ohlcv';tfTs[key]=Date.now();saveCache(tId(tok),k,CH[k]);ok=true;anyOk=true;HIST_ERR=''}
+      }catch(e){HIST_ERR=k+': '+(e.message||e);await new Promise(r=>setTimeout(r,700))}
     }
     if(!ok&&k==='1m'&&(CH['1m']||[]).length===0){if(await tradesHistory(tok)){anyOk=true;tfTs[key]=Date.now()}}
   }
   baseBusy=false;
   deriveAll();fitToData();
-  if(!anyOk&&(CH['1m']||[]).length===0)toast('warn','History route unavailable — chart building from live ticks only. Check /api/proxy on Vercel.');
+  if(!anyOk&&(CH['1m']||[]).length===0)toast('warn','No history route works yet — chart builds from live polls. Open ⓘ diag + deploy /api/proxy for full history.');
 }
 /* ===== CHART ===== */
 const cv=$('#cv'),ctx=cv.getContext('2d');let CW=0,CHH=0,mouse=null,panning=null;
@@ -556,7 +569,7 @@ function draw(){
   const emp=$('#cEmp');
   if(!sel){emp.classList.remove('hd');emp.innerHTML='<div class="e">◌</div><div class="b">Select a token</div>';return}
   const arr=CH[curTF]||[];
-  if(!arr.length){emp.classList.remove('hd');emp.innerHTML='<div class="e">◔</div><div class="b">No candles on '+curTF+' yet</div><div style="font-size:9px;color:var(--fn)">loading history… or live candles form as price moves</div>';$('#leg').innerHTML='';return}
+  if(!arr.length){emp.classList.remove('hd');emp.innerHTML='<div class="e">◔</div><div class="b">No '+curTF+' candles yet</div><div style="font-size:9px;color:var(--fn)">history: '+(histSrc['1m']||'loading')+' · press ⟳H to retry · ⓘ for diagnostics</div>';$('#leg').innerHTML='';return}
   emp.classList.add('hd');
   const bw=tfB(curTF),plotW=CW-PAD.l-PAD.r,plotH=CHH-PAD.t-PAD.b;
   const startT=view.endT-plotW*view.scale;
@@ -612,7 +625,6 @@ function draw(){
   const src=$('#cSrc');src.classList.remove('hd');src.textContent=curTF+' · '+arr.length+' candles · src:'+(histSrc[curTF]||'live')+' · '+ROUTES[routeI].n;
 }
 function legUpd(c){if(!c){$('#leg').innerHTML='';return}const ch=(c.c-c.o)/c.o*100;$('#leg').innerHTML=`<span>O <b>${fP(c.o)}</b></span><span>H <b class="up">${fP(c.h)}</b></span><span>L <b class="dn">${fP(c.l)}</b></span><span>C <b class="${cls(ch)}">${fP(c.c)}</b></span>${c.v?`<span>V <b>${fC(c.v)}</b></span>`:''}`}
-/* countdown: only real candle TFs */
 setInterval(()=>{const el=$('#ncT');const cfg=tfCfg(curTF);if(!sel||cfg.src==='tick'){el.classList.add('hd');return}el.classList.remove('hd');const bw=cfg.b;const rem=bw-(Date.now()%bw);el.innerHTML='next '+curTF+' candle in <b>'+fMs(rem)+'</b>'},250);
 TFS.forEach(t=>{const b=document.createElement('button');b.className='gbtn'+(t.k===curTF?' on':'');b.textContent=t.k;b.onclick=()=>loadTF(t.k);$('#tfG').appendChild(b)});
 function loadTF(k){curTF=k;$$('#tfG .gbtn').forEach(x=>x.classList.toggle('on',x.textContent===k));if(!CH[k])CH[k]=[];fitToData();if(sel)fetchBases(sel)}
@@ -634,7 +646,7 @@ async function selectToken(t){
   fetchBases(t);
   scanSec(t);pollTrades(true);enrich(t);
 }
-async function enrich(t){try{const j=await fj(DS+'/latest/dex/tokens/'+t.address);const ps=(j.pairs||[]).filter(p=>p.chainId===t.chain);if(ps.length&&sel&&tId(sel)===tId(t)){ps.sort((a,b)=>(pf(b.liquidity?.usd)||0)-(pf(a.liquidity?.usd)||0));const f=nDS(ps[0]);TOK[tId(f)]=f;sel={...t,...f};sv(K+'sel',sel);renderHead();renderTrade()}}catch(e){}}
+async function enrich(t){try{const j=await fjRaw(DS+'/latest/dex/tokens/'+t.address);const ps=(j.pairs||[]).filter(p=>p.chainId===t.chain);if(ps.length&&sel&&tId(sel)===tId(t)){ps.sort((a,b)=>(pf(b.liquidity?.usd)||0)-(pf(a.liquidity?.usd)||0));const f=nDS(ps[0]);TOK[tId(f)]=f;sel={...t,...f};sv(K+'sel',sel);renderHead();renderTrade();if(!sel.pair)sel.pair=f.pair}}catch(e){}}
 function renderHead(){
   if(!sel){$('#tName').textContent='—';$('#tQuote').textContent='';$('#tLinks').textContent='Select a token';$('#tPrice').textContent='—';$('#tChg').textContent='';return}
   $('#tIcon').innerHTML=sel.image?`<img src="${sel.image}" onerror="this.outerHTML='<div class=\\'cv\\'>${esc((sel.symbol||'?')[0].toUpperCase())}</div>'">`:`<div class="cv">${esc((sel.symbol||'?')[0].toUpperCase())}</div>`;
@@ -649,7 +661,7 @@ function renderHead(){
 }
 /* security */
 const GPC={ethereum:'1',eth:'1',bsc:'56',base:'8453',arbitrum:'42161',blast:'81457'};
-async function scanSec(t){sec={loading:true};let gp=null;try{const url=t.chain==='solana'?`${GP}/solana/token_security?contract_addresses=${t.address}`:`${GP}/token_security/${GPC[t.chain]||'1'}?contract_addresses=${t.address.toLowerCase()}`;try{const j=await fj(url,7000);gp=j.result?.[Object.keys(j.result||{})[0]]||null}catch(e){try{const j=await rf(url,9000);gp=j.result?.[Object.keys(j.result||{})[0]]||null}catch(e2){}}}catch(e){}if(!sel||tId(sel)!==tId(t))return;sec=buildSec(t,gp);renderSecBadge();renderSecStats();if(bTab==='rug')renderBottom()}
+async function scanSec(t){sec={loading:true};let gp=null;try{const url=t.chain==='solana'?`${GP}/solana/token_security?contract_addresses=${t.address}`:`${GP}/token_security/${GPC[t.chain]||'1'}?contract_addresses=${t.address.toLowerCase()}`;try{const j=await fjRaw(url,7000);gp=j.result?.[Object.keys(j.result||{})[0]]||null}catch(e){try{const j=await rf(url,9000);gp=j.result?.[Object.keys(j.result||{})[0]]||null}catch(e2){}}}catch(e){}if(!sel||tId(sel)!==tId(t))return;sec=buildSec(t,gp);renderSecBadge();renderSecStats();if(bTab==='rug')renderBottom()}
 function buildSec(t,gp){
   const ck=[];let sc=0,hp=false;
   const ap=(l,s,d,p)=>{ck.push({label:l,st:s,detail:d});if(s==='bad')sc+=p;else if(s==='warn')sc+=Math.round(p/2)};
@@ -747,7 +759,7 @@ function renderSide(){
   ${copW.slice(0,6).map(w=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--ln);font-size:9px"><span style="font-family:var(--mo);color:var(--cy)">${esc(shrt(w.addr))}</span><span class="${w.active?'up':'dn'}" style="font-weight:700">${w.active?'ON':'OFF'}</span></div>`).join('')}
   <button class="btn" style="width:100%;margin-top:7px" onclick="document.querySelector('[data-b=copy]').click()">Manage wallets →</button>
   <div style="font-size:8px;color:var(--fn);font-weight:700;letter-spacing:.12em;margin:10px 0 4px">HOTKEYS</div>
-  <div style="font-size:8.5px;color:var(--dm);line-height:2"><span class="kbd">B</span> buy · <span class="kbd">S</span> sell · <span class="kbd">Space</span> flip side · <span class="kbd">F</span> fit · <span class="kbd">/</span> search</div>`;
+  <div style="font-size:8.5px;color:var(--dm);line-height:2"><span class="kbd">B</span> buy · <span class="kbd">S</span> sell · <span class="kbd">Space</span> flip · <span class="kbd">F</span> fit · <span class="kbd">/</span> search</div>`;
 }
 function drawSpark(){const c=$('#eqSpark');if(!c)return;const d=window.devicePixelRatio||1;const w=c.clientWidth,h=30;c.width=w*d;c.height=h*d;const x=c.getContext('2d');x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,w,h);const eq=WAL.eqHist||[];if(eq.length<2)return;let mn=Infinity,mx=-Infinity;eq.forEach(p=>{if(p.e<mn)mn=p.e;if(p.e>mx)mx=p.e});if(mx===mn){mx+=1;mn-=1}const up=eq[eq.length-1].e>=eq[0].e;x.strokeStyle=up?'#4ade80':'#f87171';x.lineWidth=1.4;x.beginPath();eq.forEach((p,i)=>{const px=i/(eq.length-1)*w,py=h-2-((p.e-mn)/(mx-mn))*(h-4);i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke()}
 /* trading */
@@ -874,10 +886,10 @@ let loops={};
 async function loopSel(){
   if(sel&&!busyPoll){busyPoll=true;lastPoll=Date.now();
     try{
-      const j=await fj(DS+'/latest/dex/tokens/'+sel.address,5000);
+      const j=await fjRaw(DS+'/latest/dex/tokens/'+sel.address,5000);
       const ps=(j.pairs||[]).filter(p=>p.chainId===sel.chain);
       if(ps.length){ps.sort((a,b)=>(pf(b.liquidity?.usd)||0)-(pf(a.liquidity?.usd)||0));const t=nDS(ps[0]);TOK[tId(t)]=t;addTick(t.price);
-        if(sel&&t.chain===sel.chain&&t.address===sel.address){sel={...sel,...t};sv(K+'sel',sel);$('#tPrice').innerHTML=fP(sel.price,true);const c=$('#tChg');c.textContent=fPct(sel.c24)+' 24h';c.className='c '+(sel.c24==null?'':cls(sel.c24));$('#sLiq').textContent=fC(sel.liq);$('#sMc').textContent=fC(sel.mcap);$('#sFdv').textContent=fC(sel.fdv);$('#sVol').textContent=fC(sel.v24);$('#sV1').textContent=fC(sel.v1h);$('#sAge').textContent=fAge(sel.created);renderTrade();renderPf();if(bTab==='positions')renderBottom()}
+        if(sel&&t.chain===sel.chain&&t.address===sel.address){sel={...sel,...t};if(!sel.pair)sel.pair=t.pair;sv(K+'sel',sel);$('#tPrice').innerHTML=fP(sel.price,true);const c=$('#tChg');c.textContent=fPct(sel.c24)+' 24h';c.className='c '+(sel.c24==null?'':cls(sel.c24));$('#sLiq').textContent=fC(sel.liq);$('#sMc').textContent=fC(sel.mcap);$('#sFdv').textContent=fC(sel.fdv);$('#sVol').textContent=fC(sel.v24);$('#sV1').textContent=fC(sel.v1h);$('#sAge').textContent=fAge(sel.created);renderTrade();renderPf();if(bTab==='positions')renderBottom()}
         checkTpSl();checkOrders();checkAlerts();draw()}
     }catch(e){}
     busyPoll=false}
@@ -885,7 +897,7 @@ async function loopSel(){
   loops.sel=setTimeout(loopSel,SET.pHz*1000);
 }
 async function loopFeed(){if(feedMode==='trenches'||feedMode==='trending'){const l=await refreshFeed(feedMode,true);renderList(l)}loops.feed=setTimeout(loopFeed,SET.tHz*1000)}
-async function loopOther(){try{const ad=new Set();Object.values(WAL.pos).forEach(p=>ad.add(p.addr));watch.forEach(id=>ad.add(id.split(':')[1]));(feedCache[feedMode].d||[]).slice(0,90).forEach(t=>ad.add(t.address));if(sel)ad.delete(sel.address);const L=[...ad].filter(Boolean);for(let i=0;i<L.length;i+=30){try{const j=await fj(DS+'/latest/dex/tokens/'+L.slice(i,i+30).join(','),6000);(j.pairs||[]).forEach(p=>{const t=nDS(p);TOK[tId(t)]=t})}catch(e){}await new Promise(r=>setTimeout(r,50))}patchRows();renderPf();checkTpSl();$('#sbSync').textContent='sync '+fClk(Date.now())}catch(e){}}
+async function loopOther(){try{const ad=new Set();Object.values(WAL.pos).forEach(p=>ad.add(p.addr));watch.forEach(id=>ad.add(id.split(':')[1]));(feedCache[feedMode].d||[]).slice(0,90).forEach(t=>ad.add(t.address));if(sel)ad.delete(sel.address);const L=[...ad].filter(Boolean);for(let i=0;i<L.length;i+=30){try{const j=await fjRaw(DS+'/latest/dex/tokens/'+L.slice(i,i+30).join(','),6000);(j.pairs||[]).forEach(p=>{const t=nDS(p);TOK[tId(t)]=t})}catch(e){}await new Promise(r=>setTimeout(r,50))}patchRows();renderPf();checkTpSl();$('#sbSync').textContent='sync '+fClk(Date.now())}catch(e){}}
 let cacheT=0;
 function loopCache(){if(!sel)return;const now=Date.now();if(now-cacheT<20000)return;cacheT=now;if((CH['1m']||[]).length)saveCache(tId(sel),'1m',CH['1m']);if((CH['1H']||[]).length)saveCache(tId(sel),'1H',CH['1H']);svWal()}
 function reLoops(){clearTimeout(loops.sel);clearTimeout(loops.feed);loopSel();loopFeed()}
@@ -895,11 +907,12 @@ async function boot(){
   apSet();document.body.classList.toggle('noanim',!SET.anim);
   $('#rows').innerHTML=Array.from({length:9},()=>'<div class="sk"></div>').join('');
   $('#cW').textContent=watch.length;
-  if(sel&&sel.chain){CH['1m']=loadCache(tId(sel),'1m')||[];CH['1H']=loadCache(tId(sel),'1H')||[];deriveAll();renderHead();scanSec(sel)}
+  probeRoutes();
+  if(sel&&sel.chain){CH['1m']=loadCache(tId(sel),'1m')||[];CH['1H']=loadCache(tId(sel),'1H')||[];if(CH['1m'].length)histSrc['1m']='cache';if(CH['1H'].length)histSrc['1H']='cache';deriveAll();renderHead();scanSec(sel)}
   try{await switchFeed(feedMode)}catch(e){$('#rows').innerHTML='<div class="emp"><div class="e">⚠</div>Feed failed<br><button class="btn" style="margin-top:6px" onclick="switchFeed(feedMode)">Retry</button></div>'}
   if(sel){if(sel.price)addTick(sel.price);fitToData();fetchBases(sel)}
   renderTrade();renderPf();renderBottom();renderSide();rsz();
-  if(feedCache[feedMode].d.length)toast('success','TRENCHH live · <b>'+feedCache[feedMode].d.length+' pairs</b><br><span style="color:var(--dm);font-size:9px">history: 1m+1H bases → all TFs aggregated · cached locally</span>');
+  if(feedCache[feedMode].d.length)toast('success','TRENCHH live · <b>'+feedCache[feedMode].d.length+' pairs</b><br><span style="color:var(--dm);font-size:9px">ⓘ on chart = route/history diagnostics · ⟳H = force reload history</span>');
 }
 window.switchFeed=switchFeed;
 reLoops();boot();
