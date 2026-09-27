@@ -2,1425 +2,1736 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TRENCHH — Paper Trading Terminal</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRENCHH PAPER — live memecoin paper terminal</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230a0d18'/><path d='M20 70 L38 48 L52 58 L80 26' stroke='%234ade80' stroke-width='7' fill='none' stroke-linecap='round'/></svg>">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#07080c; --panel:#0d0f15; --panel2:#11141c; --line:#1b1f2b; --line2:#252a3a;
-  --txt:#dfe3ee; --dim:#7c8296; --dim2:#4c5265;
-  --grn:#0ecb81; --red:#f6465d; --amb:#f0b90b; --cyn:#22d3ee; --vio:#8b5cf6;
-  --mono:'SF Mono','JetBrains Mono',Consolas,monospace;
+--bg:#0a0d18;--bg2:#0e1220;--bg3:#131a2c;--panel:#10162a;--panel2:#0c1122;
+--line:#1e2740;--line2:#2a3554;--txt:#e6ebf7;--dim:#8b96b3;--faint:#5a6480;
+--grn:#4ade80;--red:#fb7185;--amb:#fbbf24;--blu:#60a5fa;--pur:#a78bfa;--cyn:#22d3ee;
+--mono:'JetBrains Mono',monospace;--body:'Inter',sans-serif;
 }
-*{box-sizing:border-box;margin:0;padding:0}
+*{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
-body{background:var(--bg);color:var(--txt);font:13px/1.45 Inter,-apple-system,'Segoe UI',Roboto,sans-serif;overflow:hidden}
-::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#232838;border-radius:4px}::-webkit-scrollbar-track{background:transparent}
-button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
-input,select{font:inherit;color:var(--txt);background:#0a0c12;border:1px solid var(--line);border-radius:6px;padding:6px 8px;outline:none}
-input:focus,select:focus{border-color:#2f3b58}
-.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.grn{color:var(--grn)}.red{color:var(--red)}.amb{color:var(--amb)}.cyn{color:var(--cyn)}.dim{color:var(--dim)}
-#app{display:grid;grid-template-rows:46px 1fr 26px;height:100vh}
-
-/* ---------- top bar ---------- */
-#topbar{display:flex;align-items:center;gap:16px;padding:0 14px;background:var(--panel);border-bottom:1px solid var(--line)}
-#logo{font-weight:900;font-size:16px;letter-spacing:2px;color:#fff}
-#logo span{color:var(--grn)}
-.tstat{display:flex;flex-direction:column;line-height:1.15}
-.tstat b{font-family:var(--mono);font-size:12.5px;font-weight:600}
-.tstat span{font-size:9.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px}
-#topbar .sp{flex:1}
-#statusDot{width:8px;height:8px;border-radius:50%;background:var(--dim2);display:inline-block;margin-right:6px}
-#statusDot.on{background:var(--grn);box-shadow:0 0 8px var(--grn)}
-#clock{font-family:var(--mono);font-size:12px;color:var(--dim)}
-.icobtn{width:30px;height:30px;border-radius:7px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:14px}
-.icobtn:hover{border-color:var(--line2);background:#161a25}
-
-/* ---------- main grid ---------- */
-#main{display:grid;grid-template-columns:365px 1fr 295px;min-height:0}
-aside,#center{min-height:0;overflow:hidden;display:flex;flex-direction:column}
-#left{border-right:1px solid var(--line);background:var(--panel)}
-#right{border-left:1px solid var(--line);background:var(--panel);padding:10px;gap:10px;overflow-y:auto}
-
-/* ---------- left: sections ---------- */
-#secTabs{display:flex;gap:2px;padding:8px 8px 0}
-#secTabs button{flex:1;padding:7px 0;font-size:11.5px;font-weight:700;color:var(--dim);border-radius:7px 7px 0 0;border-bottom:2px solid transparent}
-#secTabs button.on{color:#fff;border-bottom-color:var(--grn);background:linear-gradient(180deg,#12151f,transparent)}
-#chainBar{display:flex;gap:4px;padding:8px;flex-wrap:wrap}
-#chainBar button{padding:3px 9px;font-size:10.5px;font-weight:700;border-radius:20px;background:var(--panel2);border:1px solid var(--line);color:var(--dim)}
-#chainBar button.on{background:rgba(14,203,129,.12);border-color:var(--grn);color:var(--grn)}
-#searchRow{display:flex;gap:6px;padding:0 8px 8px}
-#searchInp{flex:1;font-size:12px}
-#sortSel{width:118px;font-size:11px}
-#chipRow{display:flex;gap:5px;flex-wrap:wrap;padding:0 8px 8px}
-.chip{padding:3px 8px;font-size:10px;font-weight:600;border-radius:5px;background:var(--panel2);border:1px solid var(--line);color:var(--dim)}
-.chip.on{background:rgba(34,211,238,.1);border-color:var(--cyn);color:var(--cyn)}
-#advTgl{margin:0 8px 6px;font-size:10.5px;color:var(--dim);text-align:left;width:calc(100% - 16px)}
-#advTgl:hover{color:var(--txt)}
-#advPanel{display:none;padding:0 8px 8px;gap:6px;grid-template-columns:1fr 1fr}
-#advPanel.open{display:grid}
-#advPanel label{font-size:9.5px;color:var(--dim);display:flex;flex-direction:column;gap:2px}
-#advPanel input,#advPanel select{padding:4px 6px;font-size:11px}
-.fchk{flex-direction:row!important;align-items:center;gap:5px!important;font-size:10.5px!important;color:var(--txt)!important}
-
-/* ---------- token list ---------- */
-#listHead{display:grid;grid-template-columns:1fr 52px 52px 52px 44px;padding:4px 10px;font-size:9px;color:var(--dim2);text-transform:uppercase;letter-spacing:.5px;border-top:1px solid var(--line)}
-#tokList{flex:1;overflow-y:auto;min-height:0}
-.trow{display:grid;grid-template-columns:1fr 52px 52px 52px 44px;gap:2px;padding:7px 10px;border-bottom:1px solid #12141d;cursor:pointer;position:relative;animation:fin .25s}
-@keyframes fin{from{opacity:0;transform:translateY(3px)}to{opacity:1}}
-.trow:hover{background:#12151f}
-.trow.sel{background:#141828;box-shadow:inset 2px 0 0 var(--grn)}
-.trow .tk{display:flex;gap:8px;align-items:center;min-width:0}
-.tava{width:26px;height:26px;border-radius:50%;background:#1c2130;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--cyn);flex-shrink:0;overflow:hidden;border:1px solid var(--line2)}
-.tava img{width:100%;height:100%;object-fit:cover}
-.tnm{min-width:0}
-.tnm b{font-size:12px;display:flex;align-items:center;gap:4px}
-.tnm span{font-size:9.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;max-width:110px}
-.pct{font-family:var(--mono);font-size:10.5px;text-align:right}
-.shield{position:absolute;right:8px;top:6px;font-family:var(--mono);font-size:8.5px;font-weight:800;padding:1px 4px;border-radius:3px}
-.shield.s-g{background:rgba(14,203,129,.15);color:var(--grn)}
-.shield.s-m{background:rgba(240,185,11,.15);color:var(--amb)}
-.shield.s-b{background:rgba(246,70,93,.15);color:var(--red)}
-.trow .liq{position:absolute;right:8px;bottom:6px;font-size:9px;color:var(--dim2);font-family:var(--mono)}
-.star{color:var(--dim2);font-size:11px}.star.on{color:var(--amb)}
-#listStatus{padding:6px 10px;font-size:10px;color:var(--dim);border-top:1px solid var(--line);display:flex;justify-content:space-between}
-#listStatus button{color:var(--cyn);font-size:10px}
-
-/* ---------- center ---------- */
-#center{background:var(--bg)}
-#emptyPane{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--dim2)}
-#emptyPane .big{font-size:40px;opacity:.5}
-#selPane{flex:1;display:flex;flex-direction:column;min-height:0}
-#tkHead{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
-#tkHead .ava{width:34px;height:34px;border-radius:50%;background:#1c2130;display:flex;align-items:center;justify-content:center;font-weight:800;overflow:hidden;border:1px solid var(--line2)}
-#tkHead .ava img{width:100%;height:100%;object-fit:cover}
-#tkId b{font-size:15px}
-#tkId .chainTag{font-size:9px;background:#1c2130;padding:2px 6px;border-radius:4px;margin-left:6px;color:var(--cyn);font-weight:700;vertical-align:2px}
-#tkId div{font-size:10px;color:var(--dim)}
-#tkPriceBig{font-family:var(--mono);font-size:18px;font-weight:700}
-.hm{display:flex;flex-direction:column;line-height:1.2}
-.hm b{font-family:var(--mono);font-size:11.5px}
-.hm span{font-size:9px;color:var(--dim2);text-transform:uppercase}
-#tkDist{display:flex;gap:3px;align-items:center}
-#tkDist .db{width:5px;border-radius:2px}
-#tkHead .sp{flex:1}
-.hbtn{padding:5px 10px;font-size:11px;border-radius:6px;background:var(--panel2);border:1px solid var(--line)}
-.hbtn:hover{border-color:var(--line2)}
-#chartBar{display:flex;align-items:center;gap:4px;padding:6px 10px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
-.tfb{padding:4px 9px;font-size:11px;font-family:var(--mono);color:var(--dim);border-radius:5px}
-.tfb.on{background:#1a1f2e;color:#fff}
-#chartBar .sp{flex:1}
-#ohlc{font-family:var(--mono);font-size:10.5px;color:var(--dim)}
-#chartWrap{position:relative;flex:1;min-height:220px;background:var(--bg)}
-#chartCv{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair}
-#chartLoad{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(7,8,12,.7);color:var(--dim);font-size:12px;z-index:5}
-.spin{width:14px;height:14px;border:2px solid var(--line2);border-top-color:var(--grn);border-radius:50%;animation:sp 1s linear infinite;margin-right:8px}
-@keyframes sp{to{transform:rotate(360deg)}}
-
-/* ---------- trade bar ---------- */
-#tradeBar{display:flex;gap:10px;padding:10px 12px;border-top:1px solid var(--line);background:var(--panel);flex-wrap:wrap;align-items:flex-start}
-.seg{display:flex;background:#0a0c12;border:1px solid var(--line);border-radius:7px;overflow:hidden}
-.seg button{padding:6px 12px;font-size:11px;font-weight:700;color:var(--dim)}
-.seg button.on{background:#1a1f2e;color:#fff}
-#sideBuy.on{color:var(--grn)!important}#sideSell.on{color:var(--red)!important}
-.tgrp{display:flex;flex-direction:column;gap:5px}
-.tgrp label{font-size:9px;color:var(--dim2);text-transform:uppercase;letter-spacing:.5px}
-#amtInp,#limPrice{width:130px;font-family:var(--mono)}
-.pchips{display:flex;gap:3px}
-.pchips button{padding:2px 7px;font-size:9.5px;background:var(--panel2);border:1px solid var(--line);border-radius:4px;color:var(--dim)}
-.pchips button:hover{color:#fff;border-color:var(--line2)}
-#btnAction{padding:10px 34px;font-size:14px;font-weight:900;border-radius:8px;letter-spacing:1px;transition:.15s}
-#btnAction.buy{background:var(--grn);color:#04120b}
-#btnAction.sell{background:var(--red);color:#fff}
-#btnAction:hover{filter:brightness(1.15)}
-#btnAction:active{transform:scale(.97)}
-.tpsl{display:flex;gap:3px;flex-wrap:wrap;max-width:170px}
-.tpsl button{padding:3px 6px;font-size:9px;border-radius:4px;border:1px solid var(--line);color:var(--dim)}
-.tpsl .tp:hover{border-color:var(--grn);color:var(--grn)}
-.tpsl .sl:hover{border-color:var(--red);color:var(--red)}
-#posStrip{display:flex;gap:14px;align-items:center;padding:6px 12px;background:#0e1018;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px}
-#posStrip button{padding:3px 9px;font-size:10px;border-radius:5px;background:var(--panel2);border:1px solid var(--line)}
-
-/* ---------- tabs ---------- */
-#tabBar{display:flex;border-top:1px solid var(--line);background:var(--panel)}
-#tabBar button{padding:8px 14px;font-size:11px;font-weight:700;color:var(--dim);border-bottom:2px solid transparent}
-#tabBar button.on{color:#fff;border-bottom-color:var(--grn)}
-#tabPanes{height:190px;overflow-y:auto;background:var(--panel);border-top:1px solid var(--line)}
-table{width:100%;border-collapse:collapse;font-size:11px}
-th{text-align:left;font-size:9px;color:var(--dim2);text-transform:uppercase;letter-spacing:.5px;padding:5px 10px;position:sticky;top:0;background:var(--panel)}
-td{padding:5px 10px;border-top:1px solid #12141d;font-family:var(--mono)}
-td:first-child{font-family:Inter;font-weight:700}
-.tpill{font-size:9px;font-weight:800;padding:1px 6px;border-radius:3px}
-.tpill.b{background:rgba(14,203,129,.15);color:var(--grn)}
-.tpill.s{background:rgba(246,70,93,.15);color:var(--red)}
-.xbtn{color:var(--dim);font-size:11px}.xbtn:hover{color:var(--red)}
-.empty{padding:26px;text-align:center;color:var(--dim2);font-size:12px}
-
-/* rug scan */
-#rugBox{padding:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
-.rcard{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px}
-.rcard h4{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
-.scoreBig{font-size:34px;font-weight:900;font-family:var(--mono)}
-.rrow{display:flex;gap:8px;padding:5px 0;border-top:1px solid #161a26;font-size:11px;align-items:flex-start}
-.rrow:first-of-type{border-top:none}
-.rdot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0}
-.dbar{height:9px;border-radius:5px;background:#181c28;overflow:hidden;display:flex;margin:3px 0 8px}
-.dbar div{height:100%}
-.dlbl{display:flex;justify-content:space-between;font-size:10px;color:var(--dim)}
-
-/* bubbles */
-#bubWrap{padding:10px;display:flex;gap:14px;flex-wrap:wrap}
-#bubCv{background:#0a0c12;border:1px solid var(--line);border-radius:8px}
-#bubBars{flex:1;min-width:230px}
-
-/* ---------- right ---------- */
-.rcardSide{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px}
-.rcardSide h4{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--dim);margin-bottom:8px;display:flex;align-items:center;gap:6px}
-#wAddRow{display:flex;gap:5px}
-#wInput{flex:1;font-size:10.5px;font-family:var(--mono)}
-#wAdd{padding:5px 10px;background:var(--grn);color:#04120b;font-weight:800;border-radius:6px;font-size:11px}
-.wrow{display:flex;align-items:center;gap:7px;padding:5px 0;border-top:1px solid #161a26;font-size:10.5px}
-.wdot{width:7px;height:7px;border-radius:50%;background:var(--dim2)}
-.wdot.on{background:var(--grn)}
-.waddr{flex:1;font-family:var(--mono);color:var(--cyn);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wfeed{max-height:220px;overflow-y:auto}
-.wfi{padding:5px 0;border-top:1px solid #161a26;font-size:10px}
-.wfi .t{color:var(--dim2);font-family:var(--mono);font-size:9px}
-
-/* ---------- toasts ---------- */
-#toasts{position:fixed;top:54px;right:14px;z-index:1000;display:flex;flex-direction:column;gap:8px;width:320px}
-.toast{display:flex;gap:10px;padding:11px 12px;background:#12151f;border:1px solid var(--line2);border-left:3px solid var(--cyn);border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,.5);animation:tin .3s cubic-bezier(.2,.9,.3,1.2)}
-@keyframes tin{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:none}}
-.toast.out{opacity:0;transform:translateX(60px);transition:.3s}
-.toast.ok{border-left-color:var(--grn)}.toast.bad{border-left-color:var(--red)}.toast.warn{border-left-color:var(--amb)}.toast.buy{border-left-color:var(--grn)}.toast.sell{border-left-color:var(--red)}
-.toast .ti{font-size:16px}
-.toast b{font-size:12px;display:block}
-.toast span{font-size:11px;color:var(--dim);word-break:break-all}
-.toast .tx{margin-left:auto;color:var(--dim2)}.toast .tx:hover{color:#fff}
-
-/* ---------- status bar ---------- */
-#statusBar{display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--panel);border-top:1px solid var(--line);font-size:10px;color:var(--dim2)}
-#statusTxt{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-
-/* ---------- modal ---------- */
-.modal{position:fixed;inset:0;background:rgba(4,5,9,.75);backdrop-filter:blur(3px);z-index:900;display:none;align-items:center;justify-content:center}
-.modal.open{display:flex}
-.mbox{width:440px;max-height:82vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:18px}
-.mbox h3{font-size:14px;margin-bottom:14px;display:flex;justify-content:space-between}
-.mrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:12px}
-.mrow small{display:block;color:var(--dim);font-size:10px}
-.sw{position:relative;width:36px;height:20px;flex-shrink:0}
-.sw input{opacity:0;width:0;height:0}
-.sw i{position:absolute;inset:0;background:#232838;border-radius:20px;transition:.2s;cursor:pointer}
-.sw i:before{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#8a90a5;top:3px;left:3px;transition:.2s}
-.sw input:checked+i{background:var(--grn)}
-.sw input:checked+i:before{transform:translateX(16px);background:#04120b}
-.mbtn{padding:6px 12px;font-size:11px;border-radius:6px;background:var(--panel2);border:1px solid var(--line)}
-.mbtn:hover{border-color:var(--line2)}
-.mbtn.danger{border-color:#4a2030;color:var(--red)}
-@media(max-width:1150px){#main{grid-template-columns:320px 1fr}#right{display:none}}
+body{background:var(--bg);color:var(--txt);font-family:var(--body);font-size:13px;overflow:hidden}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#243052;border-radius:6px}
+::-webkit-scrollbar-track{background:transparent}
+button{font-family:var(--body);cursor:pointer;border:none;background:none;color:inherit;transition:.15s}
+input,select{font-family:var(--mono);background:#0a0f1e;border:1px solid var(--line);color:var(--txt);border-radius:7px;padding:7px 9px;font-size:11.5px;outline:none}
+input:focus,select:focus{border-color:var(--blu)}
+.mono{font-family:var(--mono)}
+.up{color:var(--grn)}.dn{color:var(--red)}.dim{color:var(--dim)}.faint{color:var(--faint)}
+#topbar{height:46px;display:flex;align-items:center;gap:14px;padding:0 14px;background:var(--bg2);border-bottom:1px solid var(--line)}
+#topbar .brand{font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:.06em}
+#topbar .brand em{color:var(--grn);font-style:normal}
+.stat-chip{display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-family:var(--mono);font-size:11px}
+.stat-chip .k{color:var(--faint);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase}
+.stat-chip .v{font-weight:600}
+.spacer{flex:1}
+.tbtn{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:11.5px;font-weight:600;color:var(--dim)}
+.tbtn:hover{color:var(--txt);border-color:var(--line2)}
+.tbtn.on{color:var(--txt);border-color:var(--blu);background:rgba(96,165,250,.1)}
+.tbtn.danger:hover{color:var(--red);border-color:rgba(251,113,133,.5)}
+#main{display:grid;grid-template-columns:340px 1fr 300px;height:calc(100% - 46px)}
+#left{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--bg2)}
+#center{display:flex;flex-direction:column;min-height:0;min-width:0}
+#right{border-left:1px solid var(--line);background:var(--bg2);padding:12px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+.sectabs{display:flex;border-bottom:1px solid var(--line)}
+.sectabs button{flex:1;padding:9px 4px;font-size:11.5px;font-weight:700;color:var(--faint);border-bottom:2px solid transparent}
+.sectabs button.on{color:var(--txt);border-bottom-color:var(--grn)}
+.sectabs button:hover{color:var(--dim)}
+#filters{padding:9px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:7px;max-height:210px;overflow-y:auto}
+.frow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.frow .fl{font-family:var(--mono);font-size:9px;color:var(--faint);letter-spacing:.1em;text-transform:uppercase;width:52px;flex:none}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-family:var(--mono);font-size:9.5px;color:var(--dim);letter-spacing:.05em}
+.chip.on{color:var(--grn);border-color:rgba(74,222,128,.45);background:rgba(74,222,128,.08)}
+.chip:hover{color:var(--txt)}
+.finput{width:70px;padding:5px 7px;font-size:10.5px}
+select.finput{width:auto;padding:5px 6px}
+#tblWrap{flex:1;overflow-y:auto;min-height:0}
+table.tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10.5px}
+table.tbl th{position:sticky;top:0;background:var(--bg2);color:var(--faint);font-size:9px;letter-spacing:.1em;text-transform:uppercase;text-align:right;padding:7px 8px;cursor:pointer;z-index:2;border-bottom:1px solid var(--line);white-space:nowrap}
+table.tbl th:first-child{text-align:left}
+table.tbl td{padding:7px 8px;text-align:right;border-bottom:1px solid rgba(30,39,64,.5);white-space:nowrap}
+table.tbl td:first-child{text-align:left}
+table.tbl tr.row{cursor:pointer}
+table.tbl tr.row:hover td{background:rgba(96,165,250,.06)}
+table.tbl tr.row.sel td{background:rgba(74,222,128,.08)}
+.tokcell{display:flex;align-items:center;gap:7px}
+.tokcell img{width:18px;height:18px;border-radius:50%;background:var(--bg3)}
+.tokcell .ph{width:18px;height:18px;border-radius:50%;background:var(--bg3);display:grid;place-items:center;font-size:9px;color:var(--dim)}
+.tokcell b{font-size:11px;color:var(--txt)}
+.tokcell small{color:var(--faint);font-size:9px;display:block}
+.star{color:var(--faint);font-size:12px;padding:2px 4px}
+.star.on{color:var(--amb)}
+.star:hover{color:var(--amb)}
+#listStatus{padding:6px 10px;font-family:var(--mono);font-size:9.5px;color:var(--faint);border-top:1px solid var(--line);display:flex;gap:10px;align-items:center}
+#tokenHead{padding:10px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--bg2)}
+#tokenHead .ti{display:flex;align-items:center;gap:10px}
+#tokenHead img{width:34px;height:34px;border-radius:9px;background:var(--bg3)}
+#tokenHead .ph{width:34px;height:34px;border-radius:9px;background:var(--bg3);display:grid;place-items:center;font-weight:700;color:var(--dim)}
+#tokenHead h2{font-size:16px;font-weight:800;letter-spacing:-.01em}
+#tokenHead .sym{font-family:var(--mono);color:var(--grn);font-size:11px}
+.hstats{display:flex;gap:14px;flex-wrap:wrap;margin-left:auto}
+.hstat .k{font-family:var(--mono);font-size:8.5px;color:var(--faint);letter-spacing:.12em;text-transform:uppercase}
+.hstat .v{font-family:var(--mono);font-size:11.5px;font-weight:600}
+.bdg{font-family:var(--mono);font-size:8.5px;padding:2px 7px;border-radius:999px;border:1px solid var(--line2);color:var(--dim)}
+.bdg.g{color:var(--grn);border-color:rgba(74,222,128,.4)}
+.bdg.r{color:var(--red);border-color:rgba(251,113,133,.4)}
+.bdg.a{color:var(--amb);border-color:rgba(251,191,36,.4)}
+#chartBar{display:flex;align-items:center;gap:6px;padding:7px 12px;border-bottom:1px solid var(--line);background:var(--bg2);flex-wrap:wrap}
+#chartBar .grp{display:flex;gap:3px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:2px}
+#chartBar .grp button{padding:4px 9px;border-radius:6px;font-family:var(--mono);font-size:10px;color:var(--faint)}
+#chartBar .grp button.on{background:var(--bg3);color:var(--txt)}
+#chartBar .grp button:hover{color:var(--txt)}
+#liveBadge{font-family:var(--mono);font-size:10px;color:var(--grn);display:flex;align-items:center;gap:6px;margin-left:auto}
+#liveBadge .d{width:6px;height:6px;border-radius:50%;background:var(--grn);animation:blk 1.4s steps(2) infinite}
+@keyframes blk{50%{opacity:.15}}
+#chartBox{position:relative;height:340px;flex:none;background:var(--bg)}
+#chartCanvas{width:100%;height:100%;display:block;cursor:crosshair}
+#chartTip{position:absolute;pointer-events:none;background:rgba(12,17,34,.95);border:1px solid var(--line2);border-radius:8px;padding:7px 10px;font-family:var(--mono);font-size:10px;line-height:1.6;display:none;z-index:5;white-space:nowrap}
+#centerTabs{display:flex;border-bottom:1px solid var(--line);border-top:1px solid var(--line);background:var(--bg2);overflow-x:auto}
+#centerTabs button{padding:8px 13px;font-size:11px;font-weight:600;color:var(--faint);border-bottom:2px solid transparent;white-space:nowrap}
+#centerTabs button.on{color:var(--txt);border-bottom-color:var(--blu)}
+#centerTabs button:hover{color:var(--dim)}
+#centerTabs .cnt{font-family:var(--mono);font-size:9px;color:var(--faint);margin-left:4px}
+#centerPanels{flex:1;overflow-y:auto;min-height:0;padding:10px 12px}
+.panel{display:none}
+.panel.on{display:block}
+table.grid{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10.5px}
+table.grid th{color:var(--faint);font-size:9px;letter-spacing:.1em;text-transform:uppercase;text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.grid th:first-child{text-align:left}
+table.grid td{padding:6px 8px;text-align:right;border-bottom:1px solid rgba(30,39,64,.45);white-space:nowrap}
+table.grid td:first-child{text-align:left}
+table.grid tr:hover td{background:rgba(96,165,250,.05)}
+.side-lbl{font-family:var(--mono);font-size:9px;color:var(--faint);letter-spacing:.16em;text-transform:uppercase;margin-bottom:6px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:11px}
+.bs-toggle{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:3px}
+.bs-toggle button{padding:8px;border-radius:7px;font-weight:800;font-size:12px;color:var(--faint)}
+.bs-toggle button.on.buy{background:rgba(74,222,128,.15);color:var(--grn)}
+.bs-toggle button.on.sell{background:rgba(251,113,133,.15);color:var(--red)}
+.pctrow{display:flex;gap:4px;flex-wrap:wrap}
+.pctrow button{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 2px;font-family:var(--mono);font-size:9.5px;color:var(--dim)}
+.pctrow button:hover{color:var(--txt);border-color:var(--line2)}
+.pctrow button.tp{color:var(--grn)}
+.pctrow button.sl{color:var(--red)}
+#btnExec{width:100%;padding:12px;border-radius:10px;font-weight:800;font-size:13px;letter-spacing:.04em}
+#btnExec.buy{background:var(--grn);color:#052e14}
+#btnExec.sell{background:var(--red);color:#3f0d16}
+#btnExec:hover{filter:brightness(1.1)}
+.kv{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;padding:5px 0;border-bottom:1px dashed rgba(30,39,64,.6)}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--faint)}
+.kv .v{font-weight:600}
+.modal-bg{position:fixed;inset:0;background:rgba(4,6,12,.7);backdrop-filter:blur(4px);z-index:90;display:none;align-items:center;justify-content:center}
+.modal-bg.on{display:flex}
+.modal{width:520px;max-width:92vw;max-height:86vh;overflow-y:auto;background:var(--bg2);border:1px solid var(--line2);border-radius:16px;padding:20px}
+.modal h3{font-size:15px;font-weight:800;margin-bottom:14px;display:flex;align-items:center}
+.modal h3 button{margin-left:auto;color:var(--faint);font-size:16px}
+.mrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(30,39,64,.6)}
+.mrow .ml{width:110px;font-size:12px;font-weight:600;color:var(--dim)}
+.mrow select{width:130px}
+.mrow .mini{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:5px 10px;font-size:10.5px;color:var(--dim)}
+.mrow .mini:hover{color:var(--txt)}
+#toasts{position:fixed;top:54px;right:14px;z-index:120;display:flex;flex-direction:column;gap:8px;width:330px}
+.toast{background:rgba(14,18,32,.96);border:1px solid var(--line2);border-left:3px solid var(--blu);border-radius:10px;padding:10px 13px;box-shadow:0 14px 40px rgba(0,0,0,.5);animation:tin .3s cubic-bezier(.2,.9,.3,1.2)}
+.toast.g{border-left-color:var(--grn)}
+.toast.r{border-left-color:var(--red)}
+.toast.a{border-left-color:var(--amb)}
+.toast .tt{font-weight:700;font-size:12px;display:flex;gap:8px;align-items:center}
+.toast .tm{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-top:4px;line-height:1.5;word-break:break-word}
+.toast.out{opacity:0;transform:translateX(20px);transition:.3s}
+@keyframes tin{from{opacity:0;transform:translateX(24px)}}
+.bubwrap{display:grid;grid-template-columns:1fr 240px;gap:14px}
+#bubbleSvg{width:100%;height:320px;background:var(--panel2);border:1px solid var(--line);border-radius:12px}
+#bubbleSvg circle{transform-box:fill-box;transform-origin:center;animation:pop .45s cubic-bezier(.2,.9,.3,1.3) both}
+@keyframes pop{from{transform:scale(0)}}
+#bubbleSvg text{font-family:var(--mono);pointer-events:none}
+.rugrow{display:grid;grid-template-columns:22px 1fr auto auto;gap:9px;align-items:center;padding:8px 4px;border-bottom:1px solid rgba(30,39,64,.5);font-size:12px}
+.rugrow .ic{width:20px;height:20px;border-radius:6px;display:grid;place-items:center;font-family:var(--mono);font-size:10px;font-weight:700}
+.rugrow.pass .ic{background:rgba(74,222,128,.14);color:var(--grn)}
+.rugrow.warn .ic{background:rgba(251,191,36,.13);color:var(--amb)}
+.rugrow.fail .ic{background:rgba(251,113,133,.14);color:var(--red)}
+.rugrow.na .ic{background:rgba(255,255,255,.05);color:var(--faint)}
+.rugrow .vl{font-family:var(--mono);font-size:10.5px;color:var(--dim);text-align:right}
+.rugrow .wt{font-family:var(--mono);font-size:9px;color:var(--faint);border:1px solid var(--line);border-radius:5px;padding:2px 6px}
+.scorebar{height:9px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);overflow:hidden;margin:8px 0}
+.scorefill{height:100%;border-radius:99px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.empty{padding:30px;text-align:center;color:var(--faint);font-family:var(--mono);font-size:11px}
+.wrow{display:flex;align-items:center;gap:9px;padding:8px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;background:var(--panel2)}
+.wrow .addr{font-family:var(--mono);font-size:10.5px;flex:1;cursor:pointer}
+.wrow .addr:hover{color:var(--blu)}
+.wrow .st{font-family:var(--mono);font-size:9px;color:var(--faint)}
+.wrow .st.on{color:var(--grn)}
+@media(max-width:1100px){#main{grid-template-columns:280px 1fr 260px}}
 </style>
 </head>
 <body>
-<div id="app">
-
-  <!-- ============ TOP BAR ============ -->
-  <header id="topbar">
-    <div id="logo">TRENCH<span>H</span> ⚔</div>
-    <div class="tstat"><span>Equity</span><b class="mono" id="eqVal">$10,000.00</b></div>
-    <div class="tstat"><span>Cash</span><b class="mono" id="cashVal">$10,000.00</b></div>
-    <div class="tstat"><span>Unrealized</span><b class="mono" id="upnlVal">$0.00</b></div>
-    <div class="tstat"><span>Realized</span><b class="mono" id="rpnlVal">$0.00</b></div>
-    <div class="tstat"><span>Fees</span><b class="mono dim" id="feeVal">$0.00</b></div>
-    <div class="sp"></div>
-    <span id="clock" class="mono"><span id="statusDot"></span>--:--:--</span>
-    <button class="icobtn" id="btnSettings" title="Settings">⚙</button>
-  </header>
-
-  <div id="main">
-
-    <!-- ============ LEFT ============ -->
-    <aside id="left">
-      <div id="secTabs">
-        <button data-sec="trenches" class="on">🔥 Trenches</button>
-        <button data-sec="gainers">📈 Gainers</button>
-        <button data-sec="momentum">⚡ Momentum</button>
-        <button data-sec="trending">🌊 Trending</button>
-        <button data-sec="watch">⭐ Watch</button>
-      </div>
-      <div id="chainBar"></div>
-      <div id="searchRow">
-        <input id="searchInp" placeholder="Search symbol / name / address…">
-        <select id="sortSel">
-          <option value="newest">Newest</option>
-          <option value="vol24">Vol 24h</option>
-          <option value="vol1h">Vol 1h</option>
-          <option value="chg5m">Chg 5m</option>
-          <option value="chg1h">Chg 1h</option>
-          <option value="chg24">Chg 24h</option>
-          <option value="liq">Liquidity</option>
-          <option value="mcap">Mcap</option>
-          <option value="txns">Txns</option>
-        </select>
-      </div>
-      <div id="chipRow">
-        <button class="chip" data-chip="fresh">Fresh &lt;10m</button>
-        <button class="chip" data-chip="mom5">Momentum 5m</button>
-        <button class="chip" data-chip="safe">Safe liq &gt;$10k</button>
-        <button class="chip" data-chip="degen">Degen micro</button>
-        <button class="chip" data-chip="flag">☠ Hide flagged</button>
+<div id="topbar">
+  <div class="brand">TRENCHH <em>PAPER</em></div>
+  <div class="stat-chip"><span class="k">Equity</span><span class="v" id="eqVal">$10,000</span></div>
+  <div class="stat-chip"><span class="k">Session P&L</span><span class="v" id="spnlVal">$0.00</span></div>
+  <div class="stat-chip"><span class="k" id="sndState">🔊 on</span></div>
+  <div class="spacer"></div>
+  <button class="tbtn" id="btnWallets">👛 Wallets <span class="mono faint" id="wCount">0</span></button>
+  <button class="tbtn" id="btnSettings"> Settings</button>
+  <button class="tbtn danger" id="btnReset">Reset</button>
+</div>
+<div id="main">
+  <aside id="left">
+    <div class="sectabs" id="secTabs">
+      <button data-sec="trenches" class="on">Trenches</button>
+      <button data-sec="hot">Hot now</button>
+      <button data-sec="gainers">Gainers</button>
+      <button data-sec="watch">Watch</button>
+    </div>
+    <div id="filters">
+      <div class="frow"><span class="fl">Chain</span><span id="chainChips"></span></div>
+      <div class="frow"><span class="fl">Min liq</span><input class="finput" id="fLiq" placeholder="$10k"><span class="fl" style="width:auto">1h vol</span><input class="finput" id="fVol" placeholder="$1k"><span class="fl" style="width:auto">Mcap</span><input class="finput" id="fMc" placeholder="$50k"></div>
+      <div class="frow"><span class="fl">Max age</span><select class="finput" id="fAge"><option value="0">any</option><option value="600000">10m</option><option value="3600000">1h</option><option value="21600000">6h</option><option value="86400000">24h</option></select><span class="fl" style="width:auto">Min 5m</span><input class="finput" id="fMin5" placeholder="0%" style="width:52px"></div>
+      <div class="frow">
+        <button class="chip" id="chipFlag">☠ hide flagged</button>
+        <button class="chip" id="chipFresh">Fresh &lt;10m</button>
+        <button class="chip" id="chipMomo">Momentum 5m≥5%</button>
+        <button class="chip" id="chipSafe">Safe liq &gt;$10k</button>
+        <button class="chip" id="chipDegen">Degen &lt;$200k</button>
         <button class="chip" id="btnClearF">Clear all</button>
       </div>
-      <button id="advTgl">▾ Advanced filters</button>
-      <div id="advPanel">
-        <label>Min liquidity $<input id="fMinLiq" type="number" min="0" placeholder="0"></label>
-        <label>Min 1h vol $<input id="fMinVol" type="number" min="0" placeholder="0"></label>
-        <label>Min mcap $<input id="fMcap" type="number" min="0" placeholder="0"></label>
-        <label>Max age<select id="fAge"><option value="any">any</option><option value="10m">10m</option><option value="1h">1h</option><option value="6h">6h</option><option value="24h">24h</option></select></label>
-        <label>Min 5m %<input id="fMin5" type="number" step="0.1" placeholder="any"></label>
-        <label>Min 1h %<input id="fMin1h" type="number" step="0.1" placeholder="any"></label>
+      <div class="frow"><input id="fSearch" placeholder="search symbol / name / mint…" style="flex:1"></div>
+    </div>
+    <div id="tblWrap">
+      <table class="tbl">
+        <thead><tr>
+          <th data-sort="symbol">Token</th>
+          <th data-sort="vol1">Vol 1h</th>
+          <th data-sort="c5">5m</th>
+          <th data-sort="c1">1h</th>
+          <th data-sort="c24">24h</th>
+          <th data-sort="liq">Liquidity</th>
+          <th data-sort="mcap">Mcap</th>
+          <th data-sort="created">Age</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="tblBody"></tbody>
+      </table>
+    </div>
+    <div id="listStatus"><span id="lsCount">—</span><span id="lsSrc"></span><span class="spacer"></span><span id="lsUpd"></span></div>
+  </aside>
+  <section id="center">
+    <div id="tokenHead">
+      <div class="ti"><div id="tImgWrap"><div class="ph">?</div></div><div><h2 id="tName">—</h2><span class="sym" id="tSym">select a token</span></div></div>
+      <span id="tBadges"></span>
+      <div class="hstats">
+        <div class="hstat"><div class="k">Price</div><div class="v" id="tPrice">—</div></div>
+        <div class="hstat"><div class="k">Liquidity</div><div class="v" id="tLiq">—</div></div>
+        <div class="hstat"><div class="k">Mcap</div><div class="v" id="tMc">—</div></div>
+        <div class="hstat"><div class="k">FDV</div><div class="v" id="tFdv">—</div></div>
+        <div class="hstat"><div class="k">Vol 24h</div><div class="v" id="tV24">—</div></div>
+        <div class="hstat"><div class="k">Vol 1h</div><div class="v" id="tV1">—</div></div>
+        <div class="hstat"><div class="k">b/s 1h</div><div class="v" id="tBS">—</div></div>
+        <div class="hstat"><div class="k">Age</div><div class="v" id="tAge">—</div></div>
       </div>
-      <div id="listHead"><span>Token</span><span style="text-align:right">5m</span><span style="text-align:right">1h</span><span style="text-align:right">24h</span><span style="text-align:right">Liq</span></div>
-      <div id="tokList"></div>
-      <div id="listStatus"><span id="listMeta">—</span><button id="btnRefresh">↻ refresh</button></div>
-    </aside>
-
-    <!-- ============ CENTER ============ -->
-    <section id="center">
-      <div id="emptyPane"><div class="big">⚔</div><div>Select a token to open the terminal</div><div style="font-size:11px">Live candles · rug scan · bundle map · paper trading</div></div>
-      <div id="selPane" style="display:none">
-        <div id="tkHead">
-          <div class="ava" id="tkAva">?</div>
-          <div id="tkId"><b id="tkSym">—</b><span class="chainTag" id="tkChain">—</span><div id="tkName">—</div></div>
-          <div class="hm"><span>Price</span><b id="tkPriceBig">—</b></div>
-          <div class="hm"><span>Mcap</span><b id="tkMcap">—</b></div>
-          <div class="hm"><span>Liquidity</span><b id="tkLiq">—</b></div>
-          <div class="hm"><span>Vol 24h</span><b id="tkVol">—</b></div>
-          <div class="hm"><span>Age</span><b id="tkAge">—</b></div>
-          <div class="hm"><span>Tax b/s</span><b id="tkTax">—</b></div>
-          <div class="hm"><span>Rug score</span><b id="tkShield">…</b></div>
-          <div class="hm"><span>Distribution</span><div id="tkDist">—</div></div>
-          <div class="sp"></div>
-          <a class="hbtn" id="aDex" target="_blank">DexScreener ↗</a>
-          <a class="hbtn" id="aGt" target="_blank">Gecko ↗</a>
-          <a class="hbtn" id="aGm" target="_blank">GMGN ↗</a>
-          <button class="hbtn" id="btnStar">☆</button>
-          <button class="hbtn" id="btnAlert">🔔 Alert</button>
-        </div>
-        <div id="chartBar">
-          <button class="tfb" data-tf="1m">1m</button><button class="tfb" data-tf="5m">5m</button><button class="tfb on" data-tf="15m">15m</button><button class="tfb" data-tf="1h">1h</button><button class="tfb" data-tf="4h">4h</button><button class="tfb" data-tf="1D">1D</button>
-          <span style="width:8px"></span>
-          <button class="tfb on" id="btnCandles">Candles</button><button class="tfb" id="btnArea">Area</button><button class="tfb on" id="btnEma">EMA20</button>
-          <div class="sp"></div>
-          <span id="ohlc">—</span>
-          <button class="tfb" id="btnFit">Fit</button>
-          <button class="tfb on" id="btnLive">● LIVE</button>
-        </div>
-        <div id="chartWrap">
-          <canvas id="chartCv"></canvas>
-          <div id="chartLoad" style="display:none"><div class="spin"></div>Loading candles…</div>
-        </div>
-        <div id="tradeBar">
-          <div class="tgrp"><label>Side / Type</label>
-            <div style="display:flex;gap:6px">
-              <div class="seg"><button id="sideBuy" class="on">BUY</button><button id="sideSell">SELL</button></div>
-              <div class="seg"><button id="typeMkt" class="on">Market</button><button id="typeLim">Limit</button></div>
-            </div>
+      <button class="tbtn" id="btnCopy">⧉ CA</button>
+      <button class="tbtn" id="btnWatch">☆</button>
+    </div>
+    <div id="chartBar">
+      <div class="grp" id="tfGrp">
+        <button data-tf="1m">1m</button><button data-tf="5m" class="on">5m</button><button data-tf="15m">15m</button><button data-tf="1h">1h</button><button data-tf="4h">4h</button><button data-tf="1d">1d</button>
+      </div>
+      <div class="grp" id="ctGrp">
+        <button data-ct="candles" class="on">Candles</button><button data-ct="line">Line</button><button data-ct="area">Area</button>
+      </div>
+      <div class="grp"><button id="btnVol" class="on">Vol</button></div>
+      <div class="grp"><button id="btnZout">−</button><button id="btnZin">+</button><button id="btnFit">Fit</button></div>
+      <div id="liveBadge"><span class="d"></span><span id="liveTxt">LIVE —</span></div>
+    </div>
+    <div id="chartBox"><canvas id="chartCanvas"></canvas><div id="chartTip"></div></div>
+    <div id="centerTabs">
+      <button data-ctab="trades" class="on">Trades<span class="cnt" id="cTrades">0</span></button>
+      <button data-ctab="positions">Positions<span class="cnt" id="cPos">0</span></button>
+      <button data-ctab="orders">Orders<span class="cnt" id="cOrd">0</span></button>
+      <button data-ctab="history">History</button>
+      <button data-ctab="bubbles">Bubbles</button>
+      <button data-ctab="holders">Holders</button>
+      <button data-ctab="traders">Top traders</button>
+      <button data-ctab="alerts">Alerts<span class="cnt" id="cAlerts">0</span></button>
+      <button data-ctab="rug">Rug scan</button>
+    </div>
+    <div id="centerPanels">
+      <div class="panel on" id="p-trades"><table class="grid"><thead><tr><th>Time</th><th>Side</th><th>Maker</th><th>Amount</th><th>Price</th><th>USD</th></tr></thead><tbody id="tradesBody"></tbody></table><div class="empty" id="tradesEmpty">no trades loaded</div></div>
+      <div class="panel" id="p-positions"><table class="grid"><thead><tr><th>Token</th><th>Qty</th><th>Avg</th><th>Mark</th><th>Value</th><th>uPnL</th><th></th></tr></thead><tbody id="posBody"></tbody></table><div class="empty" id="posEmpty">no open positions</div></div>
+      <div class="panel" id="p-orders"><table class="grid"><thead><tr><th>Type</th><th>Side</th><th>Token</th><th>Trigger</th><th>USD</th><th></th></tr></thead><tbody id="ordBody"></tbody></table><div class="empty" id="ordEmpty">no working orders</div></div>
+      <div class="panel" id="p-history"><table class="grid"><thead><tr><th>Time</th><th>Kind</th><th>Side</th><th>Token</th><th>Qty</th><th>Price</th><th>USD</th><th>Fee</th></tr></thead><tbody id="hisBody"></tbody></table><div class="empty" id="hisEmpty">no fills yet</div></div>
+      <div class="panel" id="p-bubbles">
+        <div class="bubwrap">
+          <svg id="bubbleSvg" viewBox="0 0 560 320"></svg>
+          <div>
+            <div class="side-lbl">Concentration</div>
+            <div class="card" id="bundleStats"></div>
+            <div class="side-lbl" style="margin-top:10px">Legend</div>
+            <div class="card mono" style="font-size:10px;line-height:1.9" id="bubbleLegend"></div>
           </div>
-          <div class="tgrp"><label>Amount (USD)</label>
-            <input id="amtInp" class="mono" type="number" value="100" min="0">
-            <div class="pchips"><button data-pct="10">10%</button><button data-pct="25">25%</button><button data-pct="50">50%</button><button data-pct="100">Max</button></div>
-          </div>
-          <div class="tgrp"><label>Limit price</label><input id="limPrice" class="mono" type="number" placeholder="—" disabled></div>
-          <div class="tgrp"><label>TP on position</label><div class="tpsl"><button class="tp" data-tp="25">TP+25</button><button class="tp" data-tp="50">TP+50</button><button class="tp" data-tp="100">TP+100</button></div></div>
-          <div class="tgrp"><label>SL on position</label><div class="tpsl"><button class="sl" data-sl="10">SL−10</button><button class="sl" data-sl="25">SL−25</button><button class="sl" data-sl="50">SL−50</button><button id="btnClrTPSL">clr</button></div></div>
-          <div class="tgrp" style="justify-content:flex-end"><button id="btnAction" class="buy">BUY</button></div>
-        </div>
-        <div id="posStrip" style="display:none">
-          <span class="dim">Position:</span><b id="psQty"></b><span id="psVal"></span><span id="psUpnl"></span>
-          <div class="sp" style="flex:1"></div>
-          <button id="psSell50">Sell 50%</button><button id="psSellAll">Sell all</button>
-        </div>
-        <div id="tabBar">
-          <button data-tab="positions" class="on">Positions <span id="cPos">0</span></button>
-          <button data-tab="orders">Orders <span id="cOrd">0</span></button>
-          <button data-tab="history">History</button>
-          <button data-tab="alerts">Alerts <span id="cAlr">0</span></button>
-          <button data-tab="rug">Rug scan</button>
-          <button data-tab="bubbles">Bubbles</button>
-          <button data-tab="stats">Stats</button>
-        </div>
-        <div id="tabPanes">
-          <div id="pane-positions"></div>
-          <div id="pane-orders" style="display:none"></div>
-          <div id="pane-history" style="display:none"></div>
-          <div id="pane-alerts" style="display:none"></div>
-          <div id="pane-rug" style="display:none"></div>
-          <div id="pane-bubbles" style="display:none"></div>
-          <div id="pane-stats" style="display:none"></div>
         </div>
       </div>
-    </section>
-
-    <!-- ============ RIGHT ============ -->
-    <aside id="right">
-      <div class="rcardSide">
-        <h4>👛 Wallet Tracker <button id="btnScanNow" style="margin-left:auto;font-size:9px;color:var(--cyn)">scan now</button></h4>
-        <div id="wAddRow"><input id="wInput" placeholder="Paste Solana wallet address…"><button id="wAdd">Track</button></div>
-        <div id="wList" style="margin-top:6px"></div>
-        <div style="font-size:9px;color:var(--dim2);margin-top:6px">Polls Solana RPC every 30s. Toast + sound on buys/sells.</div>
-      </div>
-      <div class="rcardSide">
-        <h4>📡 Wallet feed</h4>
-        <div id="wFeed" class="wfeed"><div class="empty" style="padding:12px">No activity yet</div></div>
-      </div>
-      <div class="rcardSide">
-        <h4>🗂 Data sources</h4>
-        <div style="font-size:10px;color:var(--dim);line-height:1.7">
-          • GeckoTerminal — candles, pools, prices<br>
-          • DexScreener — token meta, images, pairs<br>
-          • RugCheck — holders, authorities, LP lock<br>
-          • GMGN (via proxy) — tax, holder intel<br>
-          • Solana RPC — wallet tracking
+      <div class="panel" id="p-holders"><table class="grid"><thead><tr><th>Holder</th><th>Share</th><th>Flags</th></tr></thead><tbody id="holdBody"></tbody></table><div class="empty" id="holdEmpty">holder data unavailable</div></div>
+      <div class="panel" id="p-traders"><table class="grid"><thead><tr><th>Trader</th><th>Volume</th><th>Buys</th><th>Sells</th><th>Flow</th><th></th></tr></thead><tbody id="traderBody"></tbody></table><div class="empty" id="traderEmpty">no trade flow yet</div></div>
+      <div class="panel" id="p-alerts">
+        <div class="frow" style="margin-bottom:10px">
+          <select id="alertDir"><option value="above">price above</option><option value="below">price below</option></select>
+          <input id="alertPrice" placeholder="0.000123" style="width:120px">
+          <button class="tbtn on" id="btnAddAlert">+ alert on selected</button>
         </div>
+        <table class="grid"><thead><tr><th>Token</th><th>Condition</th><th>Price</th><th></th></tr></thead><tbody id="alertBody"></tbody></table>
+        <div class="empty" id="alertEmpty">no alerts set</div>
       </div>
-    </aside>
-  </div>
-
-  <footer id="statusBar"><span id="statusTxt">Booting…</span><span>PAPER TRADING · NOT FINANCIAL ADVICE</span><span id="sbChains">—</span></footer>
+      <div class="panel" id="p-rug">
+        <div class="card" style="margin-bottom:10px">
+          <div style="display:flex;align-items:baseline;gap:12px"><span class="side-lbl" style="margin:0">Rug risk</span><span class="mono" style="font-size:22px;font-weight:700" id="rugScore">—</span><span class="mono dim" style="font-size:10px" id="rugVerdict"></span></div>
+          <div class="scorebar"><div class="scorefill" id="rugFill" style="width:0%;background:var(--grn)"></div></div>
+          <div class="mono faint" style="font-size:9.5px" id="rugMeta"></div>
+        </div>
+        <div id="rugList"></div>
+      </div>
+    </div>
+  </section>
+  <aside id="right">
+    <div class="card">
+      <div class="side-lbl">Order ticket</div>
+      <div class="bs-toggle" id="bsToggle"><button data-side="buy" class="on buy">BUY</button><button data-side="sell" class="sell">SELL</button></div>
+      <div class="bs-toggle" style="margin-top:6px" id="btToggle"><button data-type="market" class="on">Market</button><button data-type="limit">Limit</button></div>
+      <div class="frow" style="margin-top:8px"><span class="fl" style="width:64px">Limit px</span><input id="limPrice" placeholder="—" style="flex:1" disabled></div>
+      <div class="frow"><span class="fl" style="width:64px">Amount</span><input id="amtUsd" placeholder="USD" style="flex:1" value="250"></div>
+      <div class="pctrow" style="margin-top:6px"><button data-pct="10">10%</button><button data-pct="25">25%</button><button data-pct="50">50%</button><button data-pct="100">Max</button></div>
+      <div class="side-lbl" style="margin-top:10px">Take profit (sell all)</div>
+      <div class="pctrow"><button class="tp" data-tp="25">TP+25</button><button class="tp" data-tp="50">TP+50</button><button class="tp" data-tp="100">TP+100</button><button data-tpclr="1">clr</button></div>
+      <div class="side-lbl" style="margin-top:8px">Stop loss (sell all)</div>
+      <div class="pctrow"><button class="sl" data-sl="10">SL−10</button><button class="sl" data-sl="25">SL−25</button><button class="sl" data-sl="50">SL−50</button><button data-slclr="1">clr</button></div>
+      <button id="btnExec" class="buy" style="margin-top:12px">BUY —</button>
+    </div>
+    <div class="card">
+      <div class="side-lbl">Account</div>
+      <div class="kv"><span class="k">Cash</span><span class="v" id="cashVal">$10,000</span></div>
+      <div class="kv"><span class="k">Unrealized</span><span class="v" id="unVal">$0.00</span></div>
+      <div class="kv"><span class="k">Realized</span><span class="v" id="reVal">$0.00</span></div>
+      <div class="kv"><span class="k">Fees paid</span><span class="v" id="feeVal">$0.00</span></div>
+    </div>
+    <div class="card">
+      <div class="side-lbl">Selected</div>
+      <div class="kv"><span class="k">Mark</span><span class="v" id="selMark">—</span></div>
+      <div class="kv"><span class="k">Pool</span><span class="v mono" id="selPool" style="font-size:9.5px">—</span></div>
+      <div class="kv"><span class="k">Chain</span><span class="v" id="selChain">—</span></div>
+    </div>
+  </aside>
 </div>
-
+<div class="modal-bg" id="settingsModal"><div class="modal">
+  <h3>Settings<button id="btnCloseSettings">✕</button></h3>
+  <div class="mrow"><span class="ml">Alert sound</span><select id="sndAlert"><option value="default">Default beep</option><option value="custom">Custom MP3</option><option value="off">Off</option></select><button class="mini" id="sndAlertFileBtn">upload mp3</button><input type="file" id="sndAlertFile" accept="audio/*" class="hidden" style="display:none"><button class="mini" id="sndAlertPrev">preview</button></div>
+  <div class="mrow"><span class="ml">Buy sound</span><select id="sndBuy"><option value="default">Default beep</option><option value="custom">Custom MP3</option><option value="off">Off</option></select><button class="mini" id="sndBuyFileBtn">upload mp3</button><input type="file" id="sndBuyFile" accept="audio/*" style="display:none"><button class="mini" id="sndBuyPrev">preview</button></div>
+  <div class="mrow"><span class="ml">Sell sound</span><select id="sndSell"><option value="default">Default beep</option><option value="custom">Custom MP3</option><option value="off">Off</option></select><button class="mini" id="sndSellFileBtn">upload mp3</button><input type="file" id="sndSellFile" accept="audio/*" style="display:none"><button class="mini" id="sndSellPrev">preview</button></div>
+  <div class="mrow"><span class="ml">Fee per side</span><input id="feeBps" style="width:80px" placeholder="100"> <span class="dim mono" style="font-size:10px">bps (100 = 1%)</span></div>
+  <div class="mrow"><span class="ml">Liquidity impact</span><select id="impactSel"><option value="1">on (realistic)</option><option value="0">off</option></select></div>
+  <div class="mrow"><span class="ml">Custom RPC</span><input id="rpcUrl" style="flex:1" placeholder="https://… (optional, for wallet tracking)"></div>
+  <div class="mrow"><span class="ml">Paper book</span><button class="mini" id="btnResetBook">reset account to $10k</button></div>
+  <div class="setnote mono faint" style="font-size:9.5px;margin-top:10px;line-height:1.7">sounds stored locally as base64 (keep mp3s under ~1MB). wallet tracking + on-chain forensics use solana rpc; candles/trades/pools use geckoterminal; stats use dexscreener; prices use jupiter.</div>
+</div></div>
+<div class="modal-bg" id="walletsModal"><div class="modal">
+  <h3>Wallet tracker<button id="btnCloseW">✕</button></h3>
+  <div class="frow" style="margin-bottom:12px"><input id="wAddr" placeholder="wallet address…" style="flex:1"><input id="wLabel" placeholder="label" style="width:90px"><button class="tbtn on" id="btnAddW">track</button></div>
+  <div id="wBody"></div>
+  <div class="setnote mono faint" style="font-size:9.5px;margin-top:10px;line-height:1.7">polls each wallet every 20s via rpc (signatures + tx parse). toasts + alert sound fire on every detected buy/sell. max 6 wallets to stay under public rpc limits.</div>
+</div></div>
 <div id="toasts"></div>
-
-<!-- ============ SETTINGS MODAL ============ -->
-<div class="modal" id="mSettings">
-  <div class="mbox">
-    <h3>⚙ Settings <button id="mClose" style="color:var(--dim)">✕</button></h3>
-    <div class="mrow"><div>Master sound FX<small>Kills every sound instantly</small></div><label class="sw"><input type="checkbox" id="sMaster" checked><i></i></label></div>
-    <div class="mrow"><div>Toast / alert sound<small>Wallet alerts, price alerts, warnings</small></div>
-      <select id="sToastMode" style="width:110px"><option value="default">Default</option><option value="custom">Custom MP3</option><option value="off">Off</option></select>
-    </div>
-    <div class="mrow"><div>Upload custom sound<small>MP3/WAV, keep under ~1.5MB</small></div>
-      <div style="display:flex;gap:6px"><button class="mbtn" id="sUploadBtn">📁 Upload</button><button class="mbtn" id="sToastTest">Test</button></div>
-      <input type="file" id="sFile" accept="audio/*" style="display:none">
-    </div>
-    <div class="mrow"><div id="sFileName" style="color:var(--dim);font-size:11px">No custom file loaded</div></div>
-    <div class="mrow"><div>Trade sound<small>Cha-ching on fills (buy = cha-ching, sell = reverse)</small></div>
-      <div style="display:flex;gap:6px;align-items:center"><label class="sw"><input type="checkbox" id="sTrade" checked><i></i></label><button class="mbtn" id="sTradeTest">Test</button></div>
-    </div>
-    <div class="mrow"><div>Fee + slippage (bps)<small>Applied to paper fills</small></div><input id="sFee" type="number" min="0" max="500" value="50" style="width:80px"></div>
-    <div class="mrow"><div>Reset paper account<small>Back to $10,000, clears positions/orders/history</small></div><button class="mbtn danger" id="sReset">Reset</button></div>
-    <div class="mrow"><div>Clear analysis cache</div><button class="mbtn" id="sCache">Clear</button></div>
-  </div>
-</div>
-
 <script>
-'use strict';
-/* ================================================================
-   TRENCHH — paper trading terminal
-   Data: GeckoTerminal (OHLCV/pools) · DexScreener (meta) ·
-   RugCheck (holders/authority) · GMGN via proxy (tax/intel) ·
-   Solana public RPC (wallet tracking)
-================================================================ */
-
-/* ---------------- constants ---------------- */
-const NETS = { SOL:'solana', ETH:'eth', BASE:'base', BSC:'bsc', BLAST:'blast', ARB:'arbitrum', SUI:'sui' };
-const CHAIN_LABEL = { solana:'SOL', eth:'ETH', base:'BASE', bsc:'BSC', blast:'BLAST', arbitrum:'ARB', sui:'SUI' };
-const GT = 'https://api.geckoterminal.com/api/v2';
-const TF = {
-  '1m':{path:'minute',ag:1,ms:6e4},'5m':{path:'minute',ag:5,ms:3e5},'15m':{path:'minute',ag:15,ms:9e5},
-  '1h':{path:'hour',ag:1,ms:36e5},'4h':{path:'hour',ag:4,ms:144e5},'1D':{path:'day',ag:1,ms:864e5}
+"use strict";
+/* ============================== utils ============================== */
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const sig=ms=>{const c=new AbortController();setTimeout(()=>c.abort(),ms);return c.signal};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const uid=()=>Math.random().toString(36).slice(2,10);
+function parseSh(raw){
+  if(raw==null||raw==="")return 0;
+  const s=String(raw).trim().replace(/[$,\s]/g,"");
+  if(!s)return 0;
+  const m=s.match(/^(\d*\.?\d+(?:e[-+]?\d+)?)([kKmMbBtT]?)$/);
+  if(!m)return 0;
+  const b=parseFloat(m[1]);
+  if(!isFinite(b))return 0;
+  const u=m[2].toLowerCase();
+  return b*(u==="k"?1e3:u==="m"?1e6:u==="b"?1e9:u==="t"?1e12:1);
+}
+function fmtUsd(n,d){
+  if(n==null||isNaN(n)||!isFinite(n))return"—";
+  const neg=n<0,a=Math.abs(n);
+  let s;
+  if(a>=1e9)s=(a/1e9).toFixed(2)+"B";
+  else if(a>=1e6)s=(a/1e6).toFixed(2)+"M";
+  else if(a>=1e3)s=(a/1e3).toFixed(1)+"K";
+  else s=a.toFixed(d!=null?d:2);
+  return(neg?"-":"")+ "$"+s;
+}
+function fmtPx(p){
+  if(p==null||isNaN(p)||!isFinite(p))return"—";
+  p=+p;
+  if(p===0)return"$0";
+  if(p>=1)return"$"+p.toFixed(4);
+  if(p>=0.001)return"$"+p.toFixed(6);
+  const m=p.toFixed(12).match(/^0\.(0+)(\d{1,4})/);
+  if(m){const z=m[1].length;const sub="₀₁₂₃₄₅₆₇₈₉";return"$0."+String(z).split("").map(d=>sub[+d]).join("")+m[2]}
+  return"$"+p.toExponential(2);
+}
+function fmtNum(n){if(n==null||isNaN(n))return"—";if(n>=1e9)return(n/1e9).toFixed(2)+"B";if(n>=1e6)return(n/1e6).toFixed(2)+"M";if(n>=1e3)return(n/1e3).toFixed(1)+"K";return n.toFixed(2)}
+function fmtPct(x){if(x==null||isNaN(x))return"—";return(x>0?"+":"")+x.toFixed(2)+"%"}
+function fmtAge(ms){
+  if(!ms)return"—";
+  const s=Math.max(0,Math.floor((Date.now()-ms)/1000));
+  if(s<60)return s+"s";
+  const m=Math.floor(s/60);
+  if(m<60)return m+"m";
+  const h=Math.floor(m/60);
+  if(h<24)return h+"h"+(m%60)+"m";
+  return Math.floor(h/24)+"d"+(h%24)+"h";
+}
+function fmtT(ts){return new Date(ts).toLocaleTimeString([],{hour12:false})}
+function short(a,n){n=n||4;return a?a.slice(0,n)+"…"+a.slice(-n):"—"}
+const cache=new Map();
+async function getJSON(url,ttl){
+  if(ttl){const c=cache.get(url);if(c&&Date.now()-c.t<ttl)return c.v}
+  const r=await fetch(url,{headers:{accept:"application/json"},signal:sig(13000)});
+  if(!r.ok)throw new Error(hostOf(url)+" HTTP "+r.status);
+  const j=await r.json();
+  if(ttl)cache.set(url,{t:Date.now(),v:j});
+  return j;
+}
+const hostOf=u=>{try{return new URL(u).host}catch(e){return u}};
+/* ============================== config ============================== */
+const CHAINS={
+  sol:{label:"SOL",dex:"solana",gecko:"solana"},
+  base:{label:"BASE",dex:"base",gecko:"base"},
+  eth:{label:"ETH",dex:"ethereum",gecko:"eth"},
+  bsc:{label:"BSC",dex:"bsc",gecko:"bsc"},
+  blast:{label:"BLAST",dex:"blast",gecko:"blast"},
+  arb:{label:"ARB",dex:"arbitrum",gecko:"arbitrum"},
+  sui:{label:"SUI",dex:"sui",gecko:"sui"}
 };
-const LS = k => 'tth_'+k;
-const GMGN_SLUG = { solana:'sol', eth:'eth', base:'base', bsc:'bsc', arbitrum:'arb', blast:'blast', sui:'sui' };
-
-/* ---------------- state ---------------- */
-const state = {
-  section:'trenches', chain:'SOL', rows:[], rowsKey:{}, watchRows:{},
-  selected:null, candles:{}, tf:'15m', chartStyle:'candles', showEma:true, live:true,
-  cash:10000, positions:{}, orders:[], history:[], realized:0, fees:0,
-  alerts:[], watch:[], wallets:[], wfeed:[],
-  analysis:{}, sort:'newest', lastListFetch:0
+const DEX2GECKO={};
+Object.keys(CHAINS).forEach(k=>{DEX2GECKO[CHAINS[k].dex]=CHAINS[k].gecko});
+const GECKO="https://api.geckoterminal.com/api/v2";
+const DEX="https://api.dexscreener.com";
+const JUP="https://lite-api.jup.ag";
+const RUG="https://api.rugcheck.xyz/v1";
+const RPCS=["https://solana.drpc.org","https://solana.blockpi.network/v1/rpc/public","https://solana.api.onfinality.io/public","https://api.mainnet-beta.solana.com"];
+const TF_MAP={"1m":["minute",1],"5m":["minute",5],"15m":["minute",15],"1h":["hour",1],"4h":["hour",4],"1d":["day",1]};
+/* ============================== state ============================== */
+const state={
+  section:"trenches",
+  chain:"sol",
+  filters:{liq:0,vol:0,mc:0,age:0,min5:0,flag:false,fresh:false,momo:false,safe:false,degen:false,q:""},
+  sort:{key:"created",dir:-1},
+  rows:[],
+  sel:null,
+  candles:[],
+  tf:"5m",
+  ctype:"candles",
+  showVol:true,
+  view:{count:90,offset:0},
+  trades:[],
+  traders:[],
+  rug:null,
+  holders:[],
+  sniperSet:new Set(),
+  prices:{},
+  book:LS.get("th_book",null),
+  watch:LS.get("th_watch",[]),
+  wallets:LS.get("th_wallets",[]),
+  alerts:LS.get("th_alerts",[]),
+  settings:LS.get("th_settings",null),
+  ctab:"trades",
+  pollers:{}
 };
-const F = { minLiq:0, minVol:0, minMcap:0, maxAge:'any', min5:null, min1h:null, hideFlag:false, fresh:false, mom5:false, safe:false, degen:false, q:'' };
-let settings = { master:true, toastMode:'default', customSnd:null, customName:'', trade:true, feeBps:50 };
-try{ Object.assign(settings, JSON.parse(localStorage.getItem(LS('settings'))||'{}')); }catch(e){}
-
-/* ---------------- utils ---------------- */
-const $ = id => document.getElementById(id);
-const fmt$ = n => { if(n==null||isNaN(n)) return '—'; n=+n;
-  if(Math.abs(n)>=1e9) return '$'+(n/1e9).toFixed(2)+'B';
-  if(Math.abs(n)>=1e6) return '$'+(n/1e6).toFixed(2)+'M';
-  if(Math.abs(n)>=1e3) return '$'+(n/1e3).toFixed(1)+'K';
-  if(Math.abs(n)>=1) return '$'+n.toFixed(2);
-  if(n===0) return '$0';
-  if(Math.abs(n)>=0.01) return '$'+n.toFixed(4);
-  if(Math.abs(n)>=0.000001) return '$'+n.toFixed(8);
-  if(n===0) return '$0';
-  return '$'+n.toExponential(2); };
-const fmtP = n => n==null||isNaN(n) ? '—' : (n>0?'+':'')+n.toFixed(2)+'%';
-const pctCls = n => n==null||isNaN(n) ? 'dim' : n>=0 ? 'grn' : 'red';
-const fmtPrice = n => { if(n==null||isNaN(n)) return '—'; n=+n;
-  if(n>=1000) return n.toLocaleString(undefined,{maximumFractionDigits:2});
-  if(n>=1) return n.toFixed(3);
-  if(n>=0.01) return n.toFixed(5);
-  if(n>=0.000001) return n.toFixed(8); return n.toExponential(3); };
-const fmtAge = ts => { if(!ts) return '—'; const s=(Date.now()-ts)/1000;
-  if(s<60) return Math.floor(s)+'s'; if(s<3600) return Math.floor(s/60)+'m';
-  if(s<86400) return (s/3600).toFixed(1)+'h'; return Math.floor(s/86400)+'d'; };
-const fmtTime = ts => new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-const short = (a,n=5) => a ? a.slice(0,n)+'…'+a.slice(-4) : '—';
-const esc = s => String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function jfetch(url, opts={}, ms=9000){
-  const c = new AbortController(); const t = setTimeout(()=>c.abort(), ms);
-  return fetch(url, {...opts, signal:c.signal}).finally(()=>clearTimeout(t));
-}
-async function jget(url, ms){ const r = await jfetch(url,{},ms); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
-function save(k,v){ try{ localStorage.setItem(LS(k), JSON.stringify(v)); }catch(e){} }
-function load(k,d){ try{ const v = localStorage.getItem(LS(k)); return v?JSON.parse(v):d; }catch(e){ return d; } }
-function setStatus(t){ $('statusTxt').textContent = t; }
-
-/* ---------------- audio ---------------- */
-let AC = null, customAudio = null;
-function ac(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
-  if(AC && AC.state==='suspended') AC.resume(); return AC; }
-document.addEventListener('pointerdown', ()=>ac(), {once:true});
-function tone(f0,f1,dur,type='sine',vol=.15,delay=0){
-  const c = ac(); if(!c) return;
-  const t0 = c.currentTime + delay;
-  const o = c.createOscillator(), g = c.createGain();
-  o.type = type; o.frequency.setValueAtTime(f0,t0);
-  if(f1!==f0) o.frequency.exponentialRampToValueAtTime(f1, t0+dur);
-  g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(vol,t0+.012);
-  g.gain.exponentialRampToValueAtTime(.0001, t0+dur);
-  o.connect(g).connect(c.destination); o.start(t0); o.stop(t0+dur+.05);
-}
-function sndToast(){ if(!settings.master || settings.toastMode==='off') return;
-  if(settings.toastMode==='custom' && settings.customSnd){
-    try{ customAudio = customAudio || new Audio(settings.customSnd); customAudio.currentTime=0; customAudio.play().catch(()=>{}); }catch(e){}
-    return; }
-  tone(880,1318.5,.22,'sine',.14); tone(1760,1760,.14,'sine',.05,.04); }
-function sndBuy(){ if(!settings.master||!settings.trade) return;
-  tone(1567.98,1567.98,.09,'triangle',.2); tone(2093,2093,.32,'triangle',.2,.09); tone(4186,4186,.28,'sine',.07,.09); }
-function sndSell(){ if(!settings.master||!settings.trade) return;
-  tone(2093,2093,.09,'triangle',.18); tone(1567.98,1567.98,.2,'triangle',.16,.09); tone(1046.5,1046.5,.25,'sine',.07,.1); }
-
-/* ---------------- toasts ---------------- */
-function toast(title, body, type='info', sound=true){
-  const icons = {ok:'✅',bad:'🚨',warn:'⚠️',info:'ℹ️',buy:'🟢',sell:'🔴'};
-  const el = document.createElement('div');
-  el.className = 'toast '+type;
-  el.innerHTML = `<div class="ti">${icons[type]||'ℹ️'}</div><div style="flex:1;min-width:0"><b>${esc(title)}</b><span>${body||''}</span></div><button class="tx">✕</button>`;
-  el.querySelector('.tx').onclick = ()=>kill();
-  $('toasts').prepend(el);
-  if(sound) sndToast();
-  const kill = ()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),320); };
-  setTimeout(kill, 6500);
-}
-
-/* ---------------- chains / sections UI ---------------- */
-(function buildChains(){
-  const bar = $('chainBar');
-  ['ALL','SOL','BASE','ETH','BSC','BLAST','ARB','SUI'].forEach(c=>{
-    const b = document.createElement('button');
-    b.textContent = c; if(c===state.chain) b.className='on';
-    b.onclick = ()=>{ state.chain=c; [...bar.children].forEach(x=>x.classList.toggle('on',x.textContent===c)); fetchList(true); };
-    bar.appendChild(b);
-  });
-})();
-document.querySelectorAll('#secTabs button').forEach(b=>{
-  b.onclick = ()=>{ document.querySelectorAll('#secTabs button').forEach(x=>x.classList.remove('on'));
-    b.classList.add('on'); state.section = b.dataset.sec; fetchList(true); };
-});
-document.querySelectorAll('.chip[data-chip]').forEach(c=>{
-  c.onclick = ()=>{ const k = c.dataset.chip;
-    if(k==='flag') F.hideFlag=!F.hideFlag; if(k==='fresh') F.fresh=!F.fresh;
-    if(k==='mom5'){ F.mom5=!F.mom5; F.min5 = F.mom5?3:null; }
-    if(k==='safe') F.safe=!F.safe; if(k==='degen') F.degen=!F.degen;
-    c.classList.toggle('on'); renderList(); };
-});
-$('btnClearF').onclick = ()=>{ Object.assign(F,{minLiq:0,minVol:0,minMcap:0,maxAge:'any',min5:null,min1h:null,hideFlag:false,fresh:false,mom5:false,safe:false,degen:false,q:''});
-  ['fMinLiq','fMinVol','fMcap','fMin5','fMin1h'].forEach(i=>$(i).value=''); $('fAge').value='any'; $('searchInp').value='';
-  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); renderList(); };
-$('advTgl').onclick = ()=>{ const p=$('advPanel'); p.classList.toggle('open'); $('advTgl').textContent = (p.classList.contains('open')?'▴':'▾')+' Advanced filters'; };
-['fMinLiq','fMinVol','fMcap','fMin5','fMin1h'].forEach(id=>$(id).addEventListener('input',()=>{
-  F.minLiq=+$('fMinLiq').value||0; F.minVol=+$('fMinVol').value||0; F.minMcap=+$('fMcap').value||0;
-  F.min5=$('fMin5').value===''?null:+$('fMin5').value; F.min1h=$('fMin1h').value===''?null:+$('fMin1h').value; renderList(); }));
-$('fAge').onchange = e=>{ F.maxAge=e.target.value; renderList(); };
-let qT; $('searchInp').addEventListener('input', e=>{ F.q = e.target.value.trim().toLowerCase(); clearTimeout(qT); qT=setTimeout(()=>{ state.section==='watch'?renderList():fetchList(true); }, 450); });
-$('sortSel').onchange = e=>{ state.sort = e.target.value; renderList(); };
-$('btnRefresh').onclick = ()=>fetchList(true);
-
-/* ---------------- list fetching ---------------- */
-function parsePool(d){
-  const a = d.attributes||{};
-  const net = String(d.id||'').split('_')[0];
-  const pool = String(d.id||'').split('_')[1] || a.address;
-  const baseId = d.relationships?.base_token?.data?.id || '';
-  const base = baseId.split('_')[1] || '';
-  const nameParts = String(a.name||'').split(' / ');
-  const pc = a.price_change_percentage||{}, tx = a.transactions?.h24||{}, vol = a.volume_usd||{};
-  return { chain:net, pool, base, sym:nameParts[0]||'???', name:a.name||'',
-    price:+a.base_token_price_usd||0, mcap:+(a.market_cap_usd ?? a.fdv_usd)||0, fdv:+a.fdv_usd||0,
-    liq:+(a.reserve_in_usd ?? a.liquidity_usd)||0,
-    v24:+vol.h24||0, v1:+vol.h1||0, v5:+vol.m5||0,
-    c5:pc.m5!=null?+pc.m5:null, c1:pc.h1!=null?+pc.h1:null, c6:pc.h6!=null?+pc.h6:null, c24:pc.h24!=null?+pc.h24:null,
-    buys:tx.buys||0, sells:tx.sells||0,
-    created:a.pool_created_at?Date.parse(a.pool_created_at):null, score:null, bundle:null };
-}
-function endpointsFor(sec, net){
-  const inc = '?include=base_token&page=1';
-  if(F.q) return [`${GT}/search/pools?query=${encodeURIComponent(F.q)}&network=${net}&page=1`];
-  switch(sec){
-    case 'trenches': return [`${GT}/networks/${net}/new_pools${inc}`];
-    case 'trending': return [`${GT}/networks/${net}/trending_pools${inc}`];
-    case 'gainers':  return [`${GT}/networks/${net}/pools${inc}&sort=h24_volume_usd_desc`];
-    case 'momentum': return [`${GT}/networks/${net}/pools${inc}&sort=h24_tx_count_desc`];
-    default: return [`${GT}/networks/${net}/pools${inc}&sort=h24_volume_usd_desc`];
+if(!state.book)state.book={cash:10000,positions:{},orders:[],history:[],fees:0,realized:0,t0:Date.now()};
+if(!state.settings)state.settings={sounds:{alert:{mode:"default",data:null},buy:{mode:"default",data:null},sell:{mode:"default",data:null}},rpc:"",feeBps:100,impact:true};
+function saveBook(){LS.set("th_book",state.book)}
+function saveWatch(){LS.set("th_watch",state.watch)}
+function saveWallets(){LS.set("th_wallets",state.wallets)}
+function saveAlerts(){LS.set("th_alerts",state.alerts)}
+function saveSettings(){LS.set("th_settings",state.settings)}
+/* ============================== sound ============================== */
+const Sound={
+  ctx:null,
+  ensure(){
+    if(!this.ctx){
+      const AC=window.AudioContext||window.webkitAudioContext;
+      if(AC)this.ctx=new AC();
+    }
+    if(this.ctx&&this.ctx.state==="suspended")this.ctx.resume();
+  },
+  beep(seq){
+    this.ensure();
+    if(!this.ctx)return;
+    const t=this.ctx.currentTime;
+    seq.forEach(([f,st,d])=>{
+      const o=this.ctx.createOscillator(),g=this.ctx.createGain();
+      o.type="triangle";
+      o.frequency.value=f;
+      o.connect(g);g.connect(this.ctx.destination);
+      g.gain.setValueAtTime(0.0001,t+st);
+      g.gain.exponentialRampToValueAtTime(0.22,t+st+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+st+d);
+      o.start(t+st);o.stop(t+st+d+0.06);
+    });
+  },
+  play(ch){
+    const s=state.settings.sounds[ch];
+    if(!s||s.mode==="off")return;
+    if(s.mode==="custom"&&s.data){
+      try{const a=new Audio(s.data);a.volume=0.85;a.play().catch(()=>{})}catch(e){}
+      return;
+    }
+    if(ch==="alert")this.beep([[880,0,0.1],[1320,0.11,0.16]]);
+    else if(ch==="buy")this.beep([[523,0,0.08],[784,0.08,0.12]]);
+    else this.beep([[784,0,0.08],[494,0.08,0.12]]);
   }
+};
+function refreshSoundState(){
+  const s=state.settings.sounds;
+  const anyOn=["alert","buy","sell"].some(k=>s[k].mode!=="off");
+  $("#sndState").textContent=anyOn?"🔊 on":"🔇 off";
 }
-let fetchToken = 0;
-async function fetchList(force){
-  if(state.section==='watch'){ renderList(); return; }
-  const my = ++fetchToken;
-  setStatus(`Fetching ${state.section} · ${state.chain} …`);
-  const nets = state.chain==='ALL' ? ['solana','base','bsc'] : [NETS[state.chain]];
-  const urls = nets.flatMap(n=>endpointsFor(state.section,n));
+/* ============================== toasts ============================== */
+function toast(type,title,msg,chan){
+  const box=$("#toasts");
+  const el=document.createElement("div");
+  el.className="toast "+type;
+  el.innerHTML=`<div class="tt">${esc(title)}</div>${msg?`<div class="tm">${esc(msg)}</div>`:""}`;
+  box.appendChild(el);
+  if(chan)Sound.play(chan);
+  setTimeout(()=>{el.classList.add("out");setTimeout(()=>el.remove(),320)},6000);
+  while(box.children.length>6)box.firstChild.remove();
+}
+/* ============================== rpc ============================== */
+let rpcDead=0;
+function rpcList(){
+  const c=(state.settings.rpc||"").trim();
+  const l=[];
+  if(/^https?:\/\//.test(c))l.push(c);
+  RPCS.forEach(u=>{if(!l.includes(u))l.push(u)});
+  return l;
+}
+async function rpc(method,params){
+  if(Date.now()<rpcDead)throw new Error("rpc circuit open");
+  const errs=[];
+  for(const url of rpcList()){
+    try{
+      const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method,params}),signal:sig(9000)});
+      if(!r.ok){errs.push(hostOf(url)+" "+r.status);continue}
+      const j=await r.json();
+      if(j.error){errs.push(hostOf(url)+": "+j.error.message);continue}
+      return j.result;
+    }catch(e){errs.push(hostOf(url)+": "+(e.name==="AbortError"?"timeout":e.message))}
+  }
+  rpcDead=Date.now()+30000;
+  throw new Error(errs.slice(0,4).join(" · "));
+}
+async function rpcBatch(reqs){
+  if(Date.now()<rpcDead)throw new Error("rpc circuit open");
+  for(const url of rpcList()){
+    try{
+      const body=reqs.map((r,i)=>({jsonrpc:"2.0",id:i,method:r.method,params:r.params}));
+      const res=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),signal:sig(14000)});
+      if(!rOk(res))continue;
+      const j=await res.json();
+      if(!Array.isArray(j)||j.length!==reqs.length)continue;
+      return reqs.map((_,i)=>{const x=j.find(y=>y.id===i);return x&&x.error?{error:x.error}:{result:x?x.result:undefined}});
+    }catch(e){}
+  }
+  const out=[];
+  for(const r of reqs){
+    try{out.push({result:await rpc(r.method,r.params)})}catch(e){out.push({error:{message:e.message}})}
+  }
+  return out;
+}
+function rOk(r){return r.ok}
+function b64bytes(b64){return Uint8Array.from(atob(b64),c=>c.charCodeAt(0))}
+function decodeMint(b64){
+  const b=b64bytes(b64);
+  if(b.length<82)return null;
+  const dv=new DataView(b.buffer);
+  return{mintAuth:dv.getUint32(0,true)!==0,freeze:dv.getUint32(46,true)!==0,supply:dv.getBigUint64(36,true),dec:dv.getUint8(44)};
+}
+function decodeTokenAcc(b64){
+  const b=b64bytes(b64);
+  if(b.length<72)return null;
+  const dv=new DataView(b.buffer);
+  return{owner:bytes2b58(b.slice(32,64)),amount:dv.getBigUint64(64,true)};
+}
+const B58="123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+function bytes2b58(bytes){
+  let n=0n;
+  for(const b of bytes)n=n*256n+BigInt(b);
+  let s="";
+  while(n>0n){s=B58[Number(n%58n)]+s;n/=58n}
+  for(const b of bytes){if(b===0)s="1"+s;else break}
+  return s;
+}
+/* ============================== api: gecko ============================== */
+function normGecko(p){
+  const a=p.attributes||{};
+  const id=p.id||"";
+  const parts=id.split("_");
+  const net=parts[0];
+  const pool=parts.slice(1).join("_");
+  const rel=p.relationships||{};
+  const baseId=(rel.base_token&&rel.base_token.data&&rel.base_token.data.id)||"";
+  const mint=baseId.split("_").slice(1).join("_");
+  const pc=a.price_change_percentage||{};
+  const vol=a.volume_usd||{};
+  const name=a.name||"";
+  return{
+    net,pool,mint,
+    symbol:name.split(" / ")[0]||"?",
+    name,
+    liq:+a.reserve_in_usd||0,
+    mcap:+a.market_cap_usd||+a.fdv_usd||0,
+    fdv:+a.fdv_usd||0,
+    vol1:+vol.h1||0,
+    vol24:+vol.h24||0,
+    c5:+pc.m5||0,
+    c1:+pc.h1||0,
+    c6:+pc.h6||0,
+    c24:+pc.h24||0,
+    created:a.pool_created_at?Date.parse(a.pool_created_at):0,
+    price:+a.base_token_price_usd||0
+  };
+}
+async function geckoList(section,chainKey){
+  const nets=chainKey==="all"?["solana","base","eth"]:[CHAINS[chainKey].gecko];
+  const paths={trenches:"new_pools",hot:"trending_pools",gainers:"top_pools"};
+  const urls=nets.map(n=>`${GECKO}/networks/${n}/${paths[section]}?page=1`);
+  const res=await Promise.allSettled(urls.map(u=>getJSON(u,20000)));
+  let rows=[];
+  res.forEach(r=>{if(r.status==="fulfilled")rows=rows.concat((r.value.data||[]).map(normGecko))});
+  if(section==="gainers")rows.sort((a,b)=>(b.c1||0)-(a.c1||0));
+  if(section==="hot")rows.sort((a,b)=>(b.vol1||0)-(a.vol1||0));
+  if(section==="trenches")rows.sort((a,b)=>(b.created||0)-(a.created||0));
+  return rows;
+}
+async function geckoCandles(net,pool,tf){
+  const [u,ag]=TF_MAP[tf];
+  const j=await getJSON(`${GECKO}/networks/${net}/pools/${pool}/ohlcv/${u}?aggregate=${ag}&limit=200&currency=usd`,0);
+  const list=(j&&j.data&&j.data.attributes&&j.data.attributes.ohlcv_list)||[];
+  const cs=list.map(r=>({t:r[0]*1000,o:+r[1],h:+r[2],l:+r[3],c:+r[4],v:+r[5]}));
+  cs.sort((a,b)=>a.t-b.t);
+  return cs;
+}
+async function geckoTrades(net,pool){
+  const j=await getJSON(`${GECKO}/networks/${net}/pools/${pool}/trades?limit=80`,0);
+  const base=state.sel?state.sel.mint:"";
+  return(j.data||[]).map(d=>{
+    const a=d.attributes||{};
+    const fromMint=(a.from_token_address||"").toLowerCase();
+    const isBuy=base&&fromMint!==base.toLowerCase();
+    return{
+      t:a.block_timestamp?Date.parse(a.block_timestamp):0,
+      maker:a.tx_from_address||"",
+      side:isBuy?"buy":"sell",
+      amt:isBuy?(+a.to_amount||0):(+a.from_amount||0),
+      usd:+a.volume_in_usd||+a.tx_volume_in_usd||0,
+      price:isBuy?(+a.price_to_in_usd||0):(+a.price_from_in_usd||0)
+    };
+  }).filter(x=>x.t);
+}
+/* ============================== api: dexscreener / jup / rug ============================== */
+function normPair(p){
+  return{
+    chain:p.chainId,pair:p.pairAddress,
+    mint:(p.baseToken||{}).address,
+    symbol:(p.baseToken||{}).symbol,name:(p.baseToken||{}).name,
+    img:(p.info||{}).imageUrl,
+    liq:(p.liquidity||{}).usd||0,
+    mc:p.marketCap||p.fdv||0,fdv:p.fdv||0,
+    v24:(p.volume||{}).h24||0,v1:(p.volume||{}).h1||0,
+    c5:(p.priceChange||{}).m5,c1:(p.priceChange||{}).h1,c24:(p.priceChange||{}).h24,
+    buys:(p.txns||{}).h1? p.txns.h1.buys:null,
+    sells:(p.txns||{}).h1? p.txns.h1.sells:null,
+    created:p.pairCreatedAt||0,
+    price:+p.priceUsd||0,
+    url:p.url
+  };
+}
+async function dexToken(mint){
+  const j=await getJSON(`${DEX}/latest/dex/tokens/${mint}`,15000);
+  const pairs=(j.pairs||[]).slice();
+  pairs.sort((a,b)=>((b.liquidity||{}).usd||0)-((a.liquidity||{}).usd||0));
+  return pairs.length?normPair(pairs[0]):null;
+}
+async function jupPrices(ids){
+  if(!ids.length)return{};
+  const j=await getJSON(`${JUP}/price/v2?ids=${ids.join(",")}`,0);
+  const out={};
+  const d=j.data||{};
+  Object.keys(d).forEach(k=>{const v=+d[k].price;if(v>0)out[k]=v});
+  return out;
+}
+async function rugReport(mint){
   try{
-    const res = await Promise.allSettled(urls.map(u=>jget(u,9000)));
-    if(my!==fetchToken) return;
-    const rows = [];
-    res.forEach(r=>{ if(r.status==='fulfilled' && r.value?.data) r.value.data.forEach(d=>rows.push(parsePool(d))); });
-    // dedupe by chain+base
-    const seen = new Set();
-    state.rows = rows.filter(t=>{ const k=t.chain+t.base; if(seen.has(k)||!t.base) return false; seen.add(k); return true; });
-    state.rows.forEach(t=>{ state.rowsKey[t.chain+t.pool]=t;
-      if(state.selected && state.selected.chain===t.chain && state.selected.pool===t.pool) Object.assign(state.selected, t); });
-    state.lastListFetch = Date.now();
-    $('statusDot').className='on';
-    $('sbChains').textContent = nets.join(' · ');
-    setStatus(`${state.section} loaded — ${state.rows.length} pools — ${fmtTime(Date.now())}`);
-    renderList();
+    const j=await getJSON(`${RUG}/tokens/${mint}/report`,20000);
+    return j;
   }catch(e){
-    setStatus('List fetch failed — '+(e.message||e));
-    toast('Data feed error','Could not reach GeckoTerminal. Retrying…','bad');
+    try{return await getJSON(`${RUG}/tokens/${mint}/report/summary`,20000)}catch(e2){return null}
   }
 }
-
-/* ---------------- filtering + rendering list ---------------- */
-function passFilter(t){
-  if(F.minLiq && t.liq < F.minLiq) return false;
-  if(F.minVol && t.v1 < F.minVol) return false;
-  if(F.minMcap && t.mcap < F.minMcap) return false;
-  if(F.safe && t.liq < 10000) return false;
-  if(F.degen && !(t.mcap>0 && t.mcap<200000)) return false;
-  if(F.maxAge!=='any'){ const ms={'10m':6e5,'1h':36e5,'6h':216e5,'24h':864e5}[F.maxAge];
-    if(!t.created || Date.now()-t.created > ms) return false; }
-  if(F.fresh && (!t.created || Date.now()-t.created > 6e5)) return false;
-  if(F.min5!=null && (t.c5==null || t.c5 < F.min5)) return false;
-  if(F.min1h!=null && (t.c1==null || t.c1 < F.min1h)) return false;
-  if(F.hideFlag && t.score!=null && t.score < 45) return false;
-  if(F.q){ const hay=(t.sym+' '+t.name+' '+t.base).toLowerCase(); if(!hay.includes(F.q)) return false; }
-  return true;
+/* ============================== filters + table ============================== */
+function applyFilters(rows){
+  const F=state.filters;
+  const q=F.q.toLowerCase();
+  return rows.filter(r=>{
+    if(F.chain!=="all"&&r.net!==F.chain)return false;
+    if(F.liq&&r.liq<F.liq)return false;
+    if(F.vol&&r.vol1<F.vol)return false;
+    if(F.mc&&r.mcap<F.mc)return false;
+    if(F.age&&(Date.now()-r.created)>F.age)return false;
+    if(F.min5&&(r.c5||0)<F.min5)return false;
+    if(F.flag&&r.liq<2000)return false;
+    if(F.fresh&&!(Date.now()-r.created<600000))return false;
+    if(F.momo&&!((r.c5||0)>=5))return false;
+    if(F.safe&&!(r.liq>10000))return false;
+    if(F.degen&&!(r.mcap<200000&&r.mcap>0))return false;
+    if(q){
+      const hay=((r.symbol||"")+" "+(r.name||"")+" "+(r.mint||"")).toLowerCase();
+      if(!hay.includes(q))return false;
+    }
+    return true;
+  });
 }
 function sortRows(rows){
-  const s = state.sort, g = r=>({newest:r.created||0, vol24:r.v24, vol1h:r.v1, chg5m:r.c5??-9e9, chg1h:r.c1??-9e9, chg24:r.c24??-9e9, liq:r.liq, mcap:r.mcap, txns:r.buys+r.sells}[s]||0);
-  return rows.sort((a,b)=>g(b)-g(a));
-}
-function shieldHTML(t){
-  if(t.score==null) return '';
-  const cls = t.score>=70?'s-g':t.score>=45?'s-m':'s-b';
-  const b = t.bundle!=null ? `<span style="opacity:.8"> B${Math.round(t.bundle)}%</span>` : '';
-  return `<span class="shield ${cls}">${t.score}${b}</span>`;
-}
-function renderList(){
-  const box = $('tokList');
-  let rows;
-  if(state.section==='watch'){
-    rows = state.watch.map(k=>state.watchRows[k]).filter(Boolean);
-    // refresh watch prices via multi-pool
-    refreshWatch(rows);
-  } else rows = state.rows.filter(passFilter);
-  rows = sortRows(rows.slice(0, 120));
-  if(!rows.length){ box.innerHTML = `<div class="empty">${state.section==='watch'?'No starred tokens yet — hit ☆ on any row':'No tokens match your filters'}</div>`; }
-  box.innerHTML = rows.map(t=>{
-    const k = t.chain+t.pool, sel = state.selected && state.selected.pool===t.pool && state.selected.chain===t.chain;
-    const isW = state.watch.includes(k);
-    return `<div class="trow${sel?' sel':''}" data-k="${k}">
-      ${shieldHTML(t)}
-      <div class="tk"><div class="tava">${(t.sym||'?').slice(0,3)}</div>
-        <div class="tnm"><b>${esc(t.sym)} <span class="star${isW?' on':''}" data-star="${k}">${isW?'★':'☆'}</span></b>
-        <span>${CHAIN_LABEL[t.chain]||t.chain} · ${fmtAge(t.created)} old · ${t.buys+t.sells} txns</span></div></div>
-      <div class="pct ${pctCls(t.c5)}">${fmtP(t.c5)}</div>
-      <div class="pct ${pctCls(t.c1)}">${fmtP(t.c1)}</div>
-      <div class="pct ${pctCls(t.c24)}">${fmtP(t.c24)}</div>
-      <div class="pct dim" style="font-size:9.5px">${fmt$(t.liq).replace('$','')}</div>
-      <div class="liq">${fmtPrice(t.price)} · mc ${fmt$(t.mcap).replace('$','')}</div>
-    </div>`; }).join('');
-  box.querySelectorAll('.trow').forEach(el=>el.onclick = e=>{
-    if(e.target.dataset.star){ toggleWatch(e.target.dataset.star); return; }
-    const t = state.rowsKey[el.dataset.k] || state.watchRows[el.dataset.k];
-    if(t) selectToken(t);
+  const k=state.sort.key,d=state.sort.dir;
+  return rows.slice().sort((a,b)=>{
+    if(k==="symbol")return d*((a.symbol||"").localeCompare(b.symbol||""));
+    return d*((+a[k]||0)-(+b[k]||0));
   });
-  $('listMeta').textContent = `${rows.length} tokens · ${state.section} · ${state.chain}`;
-  $('cPos').textContent = Object.keys(state.positions).length;
-  $('cOrd').textContent = state.orders.filter(o=>o.status==='open').length;
-  $('cAlr').textContent = state.alerts.filter(a=>!a.hit).length;
 }
-let watchTimer = null;
-function refreshWatch(rows){
-  if(watchTimer) return; watchTimer = setTimeout(async ()=>{ watchTimer=null;
-    const byNet = {};
-    rows.forEach(r=>{ (byNet[r.chain]=byNet[r.chain]||[]).push(r.pool); });
-    for(const net in byNet){
-      try{ const j = await jget(`${GT}/networks/${net}/pools/multi/${byNet[net].slice(0,20).join(',')}`,8000);
-        (j.data||[]).forEach(d=>{ const t = parsePool(d); const k = t.chain+t.pool;
-          if(state.watchRows[k]) Object.assign(state.watchRows[k], t); });
-      }catch(e){} }
-    if(state.section==='watch') renderList();
-  }, 300);
+function renderTable(){
+  const rows=sortRows(applyFilters(state.rows));
+  const body=$("#tblBody");
+  body.innerHTML="";
+  rows.slice(0,70).forEach(r=>{
+    const tr=document.createElement("tr");
+    tr.className="row"+(state.sel&&state.sel.mint===r.mint&&state.sel.pool===r.pool?" sel":"");
+    const watched=state.watch.some(w=>w.mint===r.mint);
+    tr.innerHTML=`<td><div class="tokcell"><span class="star ${watched?"on":""}" data-mint="${esc(r.mint)}">${watched?"★":"☆"}</span><div><b>${esc(r.symbol)}</b><small>${esc(short(r.mint,3))} · ${fmtAge(r.created)}</small></div></div></td>
+    <td>${fmtUsd(r.vol1)}</td>
+    <td class="${(r.c5||0)>=0?"up":"dn"}">${fmtPct(r.c5)}</td>
+    <td class="${(r.c1||0)>=0?"up":"dn"}">${fmtPct(r.c1)}</td>
+    <td class="${(r.c24||0)>=0?"up":"dn"}">${fmtPct(r.c24)}</td>
+    <td>${fmtUsd(r.liq)}</td>
+    <td>${fmtUsd(r.mcap)}</td>
+    <td class="faint">${fmtAge(r.created)}</td>
+    <td></td>`;
+    tr.addEventListener("click",e=>{
+      if(e.target.classList.contains("star")){toggleWatch(r);return}
+      selectToken(r);
+    });
+    body.appendChild(tr);
+  });
+  $("#lsCount").textContent=rows.length+" tokens";
+  $("#lsSrc").textContent={trenches:"gecko new_pools",hot:"gecko trending",gainers:"gecko top vol",watch:"watchlist"}[state.section];
 }
-function toggleWatch(k){
-  const i = state.watch.indexOf(k);
-  if(i>=0){ state.watch.splice(i,1); }
-  else { state.watch.push(k); const t = state.rowsKey[k]; if(t) state.watchRows[k] = {...t}; }
-  save('watch', state.watch); save('watchRows', state.watchRows); renderList(); renderHead();
+function toggleWatch(r){
+  const i=state.watch.findIndex(w=>w.mint===r.mint);
+  if(i>=0){state.watch.splice(i,1);toast("","Removed from watch",r.symbol)}
+  else{state.watch.push({mint:r.mint,chain:r.net,symbol:r.symbol,name:r.name});toast("","Added to watch ★",r.symbol)}
+  saveWatch();
+  renderTable();
+  renderWatchBtn();
+  if(state.section==="watch")loadSection();
 }
-
-/* ---------------- select token ---------------- */
-function selectToken(t){
-  state.selected = {...t}; state.candles = {}; state.analysis = {};
-  $('emptyPane').style.display='none'; $('selPane').style.display='flex';
-  document.querySelectorAll('.trow').forEach(el=>el.classList.toggle('sel', el.dataset.k===t.chain+t.pool));
-  renderHead(); renderPosStrip();
-  $('aDex').href = `https://dexscreener.com/${t.chain}/${t.pool}`;
-  $('aGt').href  = `https://www.geckoterminal.com/${t.chain}/pools/${t.pool}`;
-  $('aGm').href  = `https://gmgn.ai/${GMGN_SLUG[t.chain]||'sol'}/${t.base}`;
-  loadCandles(); analyze(t);
-  renderPositions(); renderTab();
+/* ============================== sections ============================== */
+async function loadWatch(){
+  const out=[];
+  for(const w of state.watch.slice(0,20)){
+    try{
+      const p=await dexToken(w.mint);
+      if(p)out.push({net:DEX2GECKO[p.chain]||"solana",pool:p.pair,mint:p.mint,symbol:p.symbol,name:p.name,img:p.img,liq:p.liq,mcap:p.mc,fdv:p.fdv,vol1:p.v1,vol24:p.v24,c5:p.c5,c1:p.c1,c24:p.c24,created:p.created,price:p.price});
+    }catch(e){}
+  }
+  return out;
+}
+async function loadSection(){
+  $("#lsUpd").textContent="loading…";
+  try{
+    let rows;
+    if(state.section==="watch")rows=await loadWatch();
+    else rows=await geckoList(state.section,state.chain);
+    state.rows=rows;
+    renderTable();
+    $("#lsUpd").textContent="upd "+fmtT(Date.now());
+    if(!state.sel&&rows.length)selectToken(rows[0]);
+  }catch(e){
+    $("#lsUpd").textContent="err";
+    toast("r","List load failed",e.message);
+  }
+}
+/* ============================== selection ============================== */
+function clearPollers(){
+  Object.keys(state.pollers).forEach(k=>{clearInterval(state.pollers[k]);delete state.pollers[k]});
+}
+async function selectToken(row){
+  state.sel=row;
+  state.trades=[];state.traders=[];state.rug=null;state.holders=[];state.sniperSet=new Set();
+  renderTable();
+  renderHead();
+  clearPollers();
+  await loadCandles();
+  state.pollers.candles=setInterval(loadCandles,20000);
+  loadTrades();
+  state.pollers.trades=setInterval(loadTrades,12000);
+  loadRug();
+  state.pollers.rug=setInterval(loadRug,60000);
+  loadHolders();
+  renderWatchBtn();
+  renderSelCard();
+  updateExecBtn();
 }
 function renderHead(){
-  const t = state.selected; if(!t) return;
-  $('tkSym').textContent = t.sym; $('tkName').textContent = t.name; $('tkChain').textContent = CHAIN_LABEL[t.chain]||t.chain;
-  $('tkPriceBig').textContent = fmtPrice(t.price);
-  $('tkMcap').textContent = fmt$(t.mcap); $('tkLiq').textContent = fmt$(t.liq);
-  $('tkVol').textContent = fmt$(t.v24); $('tkAge').textContent = fmtAge(t.created);
-  const an = state.analysis[t.base];
-  $('tkTax').textContent = an?.tax ? `${an.tax.buy}% / ${an.tax.sell}%` : '—';
-  const sh = $('tkShield');
-  if(an?.score!=null){ sh.textContent = an.score+'/100 '+(an.score>=70?'🛡':an.score>=45?'⚠':'☠');
-    sh.className = an.score>=70?'grn':an.score>=45?'amb':'red'; }
-  else { sh.textContent='…'; sh.className='dim'; }
-  $('tkDist').innerHTML = an?.dist ? distBar(an.dist, 40) : '—';
-  const k = t.chain+t.pool;
-  $('btnStar').textContent = state.watch.includes(k)?'★':'☆';
-  $('btnStar').style.color = state.watch.includes(k)?'var(--amb)':'';
-  $('limPrice').placeholder = t.price?fmtPrice(t.price):'—';
+  const s=state.sel;
+  if(!s)return;
+  $("#tName").textContent=s.name||s.symbol;
+  $("#tSym").textContent="$"+(s.symbol||"?")+" · "+short(s.mint,4);
+  $("#tImgWrap").innerHTML=s.img?`<img src="${esc(s.img)}" onerror="this.outerHTML='<div class=ph>?</div>'">`:`<div class="ph">${esc((s.symbol||"?")[0])}</div>`;
+  $("#tLiq").textContent=fmtUsd(s.liq);
+  $("#tMc").textContent=fmtUsd(s.mcap);
+  $("#tFdv").textContent=fmtUsd(s.fdv);
+  $("#tV24").textContent=fmtUsd(s.vol24);
+  $("#tV1").textContent=fmtUsd(s.vol1);
+  $("#tAge").textContent=fmtAge(s.created);
+  $("#tBS").textContent=s.buys!=null?s.buys+"/"+s.sells:"—";
+  const bd=$("#tBadges");
+  bd.innerHTML="";
+  const add=(t,c)=>{bd.insertAdjacentHTML("beforeend",`<span class="bdg ${c||""}">${esc(t)}</span> `)};
+  add((Object.keys(CHAINS).find(k=>CHAINS[k].gecko===s.net)||s.net).toUpperCase());
+  if(s.liq<5000)add("thin liq","r");else if(s.liq>50000)add("deep liq","g");
+  if(Date.now()-s.created<600000)add("fresh","a");
+  if(state.rug)add("rug "+state.rug.risk+"%","");
 }
-function distBar(d,h){
-  const seg = (v,c,ttl)=>v>0.4?`<div class="db" title="${ttl} ${v.toFixed(1)}%" style="width:${Math.max(2,v*0.9)}px;height:${h}px;background:${c}"></div>`:'';
-  return seg(d.insiders,'#f6465d','Insiders')+seg(d.bundles,'#f0b90b','Bundles')+seg(d.snipers,'#f97316','Snipers')
-    +seg(d.whales,'#8b5cf6','Top10 whales')+seg(d.lp,'#22d3ee','LP')+seg(d.pub,'#0ecb81','Public');
+function renderWatchBtn(){
+  const s=state.sel;
+  $("#btnWatch").textContent=s&&state.watch.some(w=>w.mint===s.mint)?"★":"☆";
 }
-
-/* ---------------- chart ---------------- */
-const chart = { cv:null, g:null, w:0, h:0, off:0, cnt:140, hover:null, drag:null };
-function chartInit(){
-  chart.cv = $('chartCv'); chart.g = chart.cv.getContext('2d');
-  const rs = ()=>{ const r = chart.cv.parentElement.getBoundingClientRect();
-    const dpr = window.devicePixelRatio||1;
-    chart.cv.width = r.width*dpr; chart.cv.height = r.height*dpr;
-    chart.w = r.width; chart.h = r.height; chart.g.setTransform(dpr,0,0,dpr,0,0); drawChart(); };
-  new ResizeObserver(rs).observe(chart.cv.parentElement); rs();
-  chart.cv.addEventListener('wheel', e=>{ e.preventDefault();
-    chart.cnt = Math.round(Math.min(400, Math.max(25, chart.cnt*(e.deltaY>0?1.15:0.87)))); drawChart(); }, {passive:false});
-  chart.cv.addEventListener('mousedown', e=>{ chart.drag = {x:e.clientX, off:chart.off}; });
-  window.addEventListener('mouseup', ()=>chart.drag=null);
-  chart.cv.addEventListener('mousemove', e=>{
-    const r = chart.cv.getBoundingClientRect();
-    if(chart.drag){ const slot = (chart.w-64)/chart.cnt;
-      chart.off = Math.max(0, Math.round(chart.drag.off + (chart.drag.x-e.clientX)/slot)); drawChart(); return; }
-    chart.hover = {x:e.clientX-r.left, y:e.clientY-r.top}; drawChart(); });
-  chart.cv.addEventListener('mouseleave', ()=>{ chart.hover=null; drawChart(); });
-  chart.cv.addEventListener('dblclick', ()=>{ chart.off=0; chart.cnt=140; drawChart(); });
+function renderSelCard(){
+  const s=state.sel;
+  $("#selPool").textContent=s?short(s.pool,6):"—";
+  $("#selChain").textContent=s?s.net:"—";
 }
-function emaArr(data,p=20){ const k=2/(p+1); let e=null; return data.map(c=>{ e = e==null?c.c : c.c*k+e*(1-k); return e; }); }
-function drawChart(){
-  const g = chart.g; if(!g) return;
-  g.clearRect(0,0,chart.w,chart.h);
-  const all = state.candles[state.tf]||[];
-  g.font = '700 44px Inter'; g.fillStyle = 'rgba(255,255,255,.025)'; g.textAlign='center';
-  g.fillText('TRENCHH', chart.w/2, chart.h/2);
-  if(!all.length){ g.font='12px Inter'; g.fillStyle='#4c5265'; g.fillText('waiting for candles…', chart.w/2, chart.h/2+24); return; }
-  const padR=64, padB=22, padT=6;
-  const volH = Math.min(56, (chart.h-padB)*.15);
-  const pH = chart.h-padB-volH-padT;
-  const n = all.length;
-  const start = Math.max(0, n-chart.cnt-chart.off);
-  const end = Math.min(n, start+chart.cnt);
-  const data = all.slice(start,end);
-  if(!data.length) return;
-  const emaFull = state.showEma ? emaArr(all) : null;
-  const ema = emaFull ? emaFull.slice(start,end) : null;
-  let lo=Infinity, hi=-Infinity, mv=0;
-  data.forEach((c,i)=>{ lo=Math.min(lo,c.l); hi=Math.max(hi,c.h); mv=Math.max(mv,c.v);
-    if(ema&&ema[i]!=null){ lo=Math.min(lo,ema[i]); hi=Math.max(hi,ema[i]); } });
-  const pad=(hi-lo)*.06||hi*.01||1e-9; lo-=pad; hi+=pad;
-  const slot=(chart.w-padR)/chart.cnt, bw=Math.max(1,slot*.62);
-  const X=i=>i*slot+slot/2, Y=p=>padT+(hi-p)/(hi-lo)*pH;
-  // grid
-  g.strokeStyle='#141722'; g.fillStyle='#5a6072'; g.font='9.5px '+'ui-monospace,monospace'; g.textAlign='left';
-  for(let i=0;i<=5;i++){ const p=lo+(hi-lo)*i/5, y=Y(p);
-    g.beginPath(); g.moveTo(0,y); g.lineTo(chart.w-padR,y); g.stroke();
-    g.fillText(fmtPrice(p), chart.w-padR+6, y+3); }
-  // time labels
-  g.textAlign='center'; const stepPx=90, ev=Math.max(1,Math.round(stepPx/slot));
-  for(let i=0;i<data.length;i+=ev){ const d=new Date(data[i].t);
-    const lbl = TF[state.tf].ms>=864e5 ? `${d.getMonth()+1}/${d.getDate()}` : String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
-    g.fillText(lbl, X(i), chart.h-6); }
-  // volume
-  data.forEach((c,i)=>{ const up=c.c>=c.o; g.fillStyle = up?'rgba(14,203,129,.28)':'rgba(246,70,93,.28)';
-    const h=(c.v/(mv||1))*volH; g.fillRect(X(i)-bw/2, padT+pH+ (volH-h), bw, h); });
-  // series
-  if(state.chartStyle==='area'){
-    g.beginPath(); data.forEach((c,i)=>{ i?g.lineTo(X(i),Y(c.c)):g.moveTo(X(i),Y(c.c)); });
-    g.strokeStyle='#22d3ee'; g.lineWidth=1.6; g.stroke();
-    g.lineTo(X(data.length-1),padT+pH); g.lineTo(X(0),padT+pH); g.closePath();
-    const gr=g.createLinearGradient(0,padT,0,padT+pH); gr.addColorStop(0,'rgba(34,211,238,.22)'); gr.addColorStop(1,'rgba(34,211,238,0)');
-    g.fillStyle=gr; g.fill(); g.lineWidth=1;
-  } else {
-    data.forEach((c,i)=>{ const up=c.c>=c.o, col=up?'#0ecb81':'#f6465d';
-      g.strokeStyle=col; g.beginPath(); g.moveTo(X(i),Y(c.h)); g.lineTo(X(i),Y(c.l)); g.stroke();
-      g.fillStyle=col; const y1=Y(Math.max(c.o,c.c)), y2=Y(Math.min(c.o,c.c));
-      g.fillRect(X(i)-bw/2, y1, bw, Math.max(1,y2-y1)); });
-  }
-  if(ema){ g.beginPath(); ema.forEach((v,i)=>{ if(v==null)return; i?g.lineTo(X(i),Y(v)):g.moveTo(X(i),Y(v)); });
-    g.strokeStyle='#f0b90b'; g.lineWidth=1.2; g.stroke(); g.lineWidth=1; }
-  // last price
-  const last=data[data.length-1], lc=last.c>=last.o?'#0ecb81':'#f6465d';
-  g.setLineDash([4,4]); g.strokeStyle=lc; g.beginPath(); g.moveTo(0,Y(last.c)); g.lineTo(chart.w-padR,Y(last.c)); g.stroke(); g.setLineDash([]);
-  g.fillStyle=lc; g.fillRect(chart.w-padR, Y(last.c)-8, padR, 16);
-  g.fillStyle='#04060a'; g.textAlign='left'; g.font='bold 9.5px ui-monospace,monospace';
-  g.fillText(fmtPrice(last.c), chart.w-padR+5, Y(last.c)+3);
-  // crosshair
-  if(chart.hover && chart.hover.x < chart.w-padR){
-    const i = Math.min(data.length-1, Math.max(0, Math.floor(chart.hover.x/slot)));
-    const c = data[i];
-    g.setLineDash([3,3]); g.strokeStyle='#3a4054';
-    g.beginPath(); g.moveTo(X(i),0); g.lineTo(X(i),chart.h-padB); g.stroke();
-    g.beginPath(); g.moveTo(0,chart.hover.y); g.lineTo(chart.w-padR,chart.hover.y); g.stroke(); g.setLineDash([]);
-    const pAt = hi-(chart.hover.y-padT)/pH*(hi-lo);
-    g.fillStyle='#1c2130'; g.fillRect(chart.w-padR, chart.hover.y-8, padR, 16);
-    g.fillStyle='#dfe3ee'; g.fillText(fmtPrice(pAt), chart.w-padR+5, chart.hover.y+3);
-    $('ohlc').innerHTML = `O <b class="${c.o<=c.c?'grn':'red'}">${fmtPrice(c.o)}</b> H <b class="grn">${fmtPrice(c.h)}</b> L <b class="red">${fmtPrice(c.l)}</b> C <b class="${c.o<=c.c?'grn':'red'}">${fmtPrice(c.c)}</b> V <b class="dim">${fmt$(c.v).replace('$','')}</b>`;
-  }
-}
-document.querySelectorAll('.tfb[data-tf]').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('.tfb[data-tf]').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on'); state.tf=b.dataset.tf; chart.off=0; loadCandles(); });
-$('btnCandles').onclick=()=>{ state.chartStyle='candles'; $('btnCandles').classList.add('on'); $('btnArea').classList.remove('on'); drawChart(); };
-$('btnArea').onclick=()=>{ state.chartStyle='area'; $('btnArea').classList.add('on'); $('btnCandles').classList.remove('on'); drawChart(); };
-$('btnEma').onclick=()=>{ state.showEma=!state.showEma; $('btnEma').classList.toggle('on',state.showEma); drawChart(); };
-$('btnFit').onclick=()=>{ chart.off=0; chart.cnt=Math.min(400,Math.max(60,(state.candles[state.tf]||[]).length||140)); drawChart(); };
-$('btnLive').onclick=()=>{ state.live=!state.live; $('btnLive').classList.toggle('on',state.live); $('btnLive').style.color=state.live?'var(--grn)':''; if(state.live){chart.off=0;drawChart();} };
-
+/* ============================== candles + chart ============================== */
 async function loadCandles(){
-  const t = state.selected; if(!t) return;
-  if(state.candles[state.tf]?.length){ drawChart(); return; }
-  $('chartLoad').style.display='flex';
-  const cfg = TF[state.tf];
+  const s=state.sel;
+  if(!s)return;
   try{
-    const j = await jget(`${GT}/networks/${t.chain}/pools/${t.pool}/ohlcv/${cfg.path}?aggregate=${cfg.ag}&limit=300&currency=usd`, 9000);
-    const list = j?.data?.attributes?.ohlcv_list||[];
-    state.candles[state.tf] = list.map(r=>({t:r[0]*1000,o:+r[1],h:+r[2],l:+r[3],c:+r[4],v:+r[5]})).reverse();
-    if(state.live) chart.off=0;
-    drawChart(); setStatus(`Candles ${state.tf} loaded (${state.candles[state.tf].length}) — ${fmtTime(Date.now())}`);
-  }catch(e){ toast('Chart error','OHLCV fetch failed: '+(e.message||e),'bad'); }
-  $('chartLoad').style.display='none';
-}
-function pushTick(price){
-  const t=state.selected; if(!t||!price) return;
-  t.price = price; $('tkPriceBig').textContent = fmtPrice(price);
-  const c = state.candles[state.tf];
-  if(c && c.length){
-    const step = TF[state.tf].ms, now=Date.now(), bucket=Math.floor(now/step)*step, last=c[c.length-1];
-    if(bucket>last.t){ c.push({t:bucket,o:last.c,h:Math.max(last.c,price),l:Math.min(last.c,price),c:price,v:0}); if(c.length>400)c.shift(); }
-    else { last.c=price; last.h=Math.max(last.h,price); last.l=Math.min(last.l,price); }
-    if(state.live && !chart.drag){ if(chart.off===0) drawChart(); }
-    else drawChart();
+    const cs=await geckoCandles(s.net,s.pool,state.tf);
+    if(cs.length){state.candles=cs;drawChart()}
+    else{state.candles=[];drawChart()}
+  }catch(e){
+    state.candles=[];
+    drawChart();
   }
-  checkOrders(price); checkAlerts(price);
-  const pk = t.chain+t.pool, pos = state.positions[pk];
-  if(pos){ pos.last = price; renderPositions(); renderPosStrip(); updateEquity(); }
 }
-
-/* ---------------- rug / bundle analysis ---------------- */
-const cache = { rc:{}, gm:{}, dex:{} };
-async function fetchRugCheck(mint){
-  const hit = cache.rc[mint]; if(hit && Date.now()-hit.ts<3e5) return hit.v;
-  try{ const j = await jget(`https://api.rugcheck.xyz/v1/tokens/${mint}/report`, 9000);
-    cache.rc[mint]={ts:Date.now(),v:j}; return j; }catch(e){ cache.rc[mint]={ts:Date.now(),v:null}; return null; }
+const cv=$("#chartCanvas");
+const cx=cv.getContext("2d");
+let cross=null;
+function sizeCanvas(){
+  const box=$("#chartBox");
+  const dpr=window.devicePixelRatio||1;
+  cv.width=box.clientWidth*dpr;
+  cv.height=box.clientHeight*dpr;
+  cx.setTransform(dpr,0,0,dpr,0,0);
 }
-async function fetchGMGN(t){
-  const key=t.chain+t.base; const hit=cache.gm[key]; if(hit&&Date.now()-hit.ts<3e5) return hit.v;
-  const slug=GMGN_SLUG[t.chain]; if(!slug){ cache.gm[key]={ts:Date.now(),v:null}; return null; }
-  const url=`https://gmgn.ai/defi/quotation/v1/tokens/security/${slug}/${t.base}`;
-  const proxies=[u=>'https://corsproxy.io/?url='+encodeURIComponent(u), u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)];
-  for(const p of proxies){
-    try{ const r = await jfetch(p(url),{},8000); const txt = await r.text();
-      const j = JSON.parse(txt);
-      if(j && (j.code===0||j.data)){ cache.gm[key]={ts:Date.now(),v:j.data}; return j.data; }
-    }catch(e){} }
-  cache.gm[key]={ts:Date.now(),v:null}; return null;
-}
-async function fetchDex(addr){
-  const hit=cache.dex[addr]; if(hit&&Date.now()-hit.ts<6e5) return hit.v;
-  try{ const j=await jget(`https://api.dexscreener.com/latest/dex/tokens/${addr}`,8000);
-    const v=j?.pairs?.[0]||null; cache.dex[addr]={ts:Date.now(),v}; return v; }catch(e){ cache.dex[addr]={ts:Date.now(),v:null}; return null; }
-}
-function distribution(t, rc, gm){
-  const D={insiders:0,bundles:0,snipers:0,whales:0,lp:0,pub:100,est:true,lpLock:null,src:[]};
-  let top10=0, creator=0;
-  // RugCheck
-  if(rc){
-    D.src.push('RugCheck');
-    const th = rc.topHolders||[];
-    let ins=0, t10=0, counted=0;
-    th.forEach(h=>{ const p=h.percent!=null?h.percent:(h.pct||0);
-      if(counted<10 && !h.insider){ t10+=p; counted++; } if(h.insider) ins+=p; });
-    top10=t10; D.insiders=Math.max(D.insiders, ins);
-    const supply = rc.token?.supply||0;
-    if(supply && rc.creatorBalance!=null) creator = rc.creatorBalance/supply*100;
-    const mkt = (rc.markets||[])[0];
-    if(mkt?.lp) D.lpLock = mkt.lp.lpLockedPct!=null?mkt.lp.lpLockedPct:(mkt.lp.lpLocked||null);
-    if(rc.insiderNetworks?.length){ const n=rc.insiderNetworks.reduce((s,x)=>s+(x.size||0),0);
-      D.bundles = Math.max(D.bundles, Math.min(40, n*0.5)); }
-    if(rc.graphInsidersDetected) D.insiders = Math.max(D.insiders, Math.min(30, rc.graphInsidersDetected*0.35));
+window.addEventListener("resize",()=>{sizeCanvas();drawChart()});
+function drawChart(){
+  sizeCanvas();
+  const W=cv.clientWidth,H=cv.clientHeight;
+  cx.clearRect(0,0,W,H);
+  const cs=state.candles;
+  if(!cs.length){
+    cx.fillStyle="#5a6480";
+    cx.font="12px JetBrains Mono";
+    cx.textAlign="center";
+    cx.fillText("no candle data for this pool/timeframe",W/2,H/2);
+    return;
   }
-  // GMGN
-  if(gm){
-    D.src.push('GMGN');
-    if(Array.isArray(gm.holders)){
-      let t10=0, ins=0;
-      gm.holders.slice(0,10).forEach(h=>{ const p=(h.hold_percent||h.percent||0);
-        t10+=p; if(/insider|sniper|bundl/i.test(h.tag||'')) ins+=p; });
-      top10=Math.max(top10,t10); D.insiders=Math.max(D.insiders,ins);
+  const padR=64,padB=22,padT=10,padL=6;
+  const volH=state.showVol?Math.floor(H*0.16):0;
+  const plotW=W-padR-padL,plotH=H-padT-padB-volH;
+  const total=cs.length;
+  const count=clamp(state.view.count,20,total);
+  const off=clamp(state.view.offset,0,Math.max(0,total-count));
+  const view=cs.slice(off,off+count);
+  let hi=-Infinity,lo=Infinity,vmax=0;
+  view.forEach(c=>{hi=Math.max(hi,c.h);lo=Math.min(lo,c.l);vmax=Math.max(vmax,c.v)});
+  if(state.ctype!=="candles"){view.forEach(c=>{hi=Math.max(hi,c.c);lo=Math.min(lo,c.c)})}
+  const pad=(hi-lo)*0.08||hi*0.01||1;
+  hi+=pad;lo-=pad;
+  const x=i=>padL+(i+0.5)*(plotW/view.length);
+  const y=p=>padT+plotH-((p-lo)/(hi-lo))*plotH;
+  cx.strokeStyle="rgba(30,39,64,.7)";
+  cx.lineWidth=1;
+  cx.font="9px JetBrains Mono";
+  cx.fillStyle="#5a6480";
+  cx.textAlign="left";
+  for(let g=0;g<=4;g++){
+    const p=lo+(hi-lo)*(g/4);
+    const yy=y(p);
+    cx.beginPath();cx.moveTo(padL,yy);cx.lineTo(W-padR,yy);cx.stroke();
+    cx.fillText(fmtPx(p),W-padR+6,yy+3);
+  }
+  cx.textAlign="center";
+  const step=Math.max(1,Math.floor(view.length/6));
+  for(let i=0;i<view.length;i+=step){
+    cx.fillText(fmtT(view[i].t),x(i),H-6);
+  }
+  if(state.showVol){
+    view.forEach((c,i)=>{
+      const h=(c.v/(vmax||1))*(volH-4);
+      cx.fillStyle=c.c>=c.o?"rgba(74,222,128,.35)":"rgba(251,113,133,.35)";
+      cx.fillRect(x(i)-plotW/view.length*0.35,padT+plotH+(volH-h),plotW/view.length*0.7,h);
+    });
+  }
+  if(state.ctype==="candles"){
+    const cw=Math.max(1.5,plotW/view.length*0.62);
+    view.forEach((c,i)=>{
+      const up=c.c>=c.o;
+      cx.strokeStyle=up?"#4ade80":"#fb7185";
+      cx.fillStyle=up?"#4ade80":"#fb7185";
+      cx.beginPath();cx.moveTo(x(i),y(c.h));cx.lineTo(x(i),y(c.l));cx.stroke();
+      const yo=y(c.o),yc=y(c.c);
+      cx.fillRect(x(i)-cw/2,Math.min(yo,yc),cw,Math.max(1,Math.abs(yc-yo)));
+    });
+  }else{
+    cx.beginPath();
+    view.forEach((c,i)=>{i?cx.lineTo(x(i),y(c.c)):cx.moveTo(x(i),y(c.c))});
+    if(state.ctype==="area"){
+      cx.save();
+      cx.lineTo(x(view.length-1),padT+plotH);cx.lineTo(x(0),padT+plotH);cx.closePath();
+      const g=cx.createLinearGradient(0,padT,0,padT+plotH);
+      g.addColorStop(0,"rgba(96,165,250,.35)");g.addColorStop(1,"rgba(96,165,250,0)");
+      cx.fillStyle=g;cx.fill();cx.restore();
+      cx.beginPath();
+      view.forEach((c,i)=>{i?cx.lineTo(x(i),y(c.c)):cx.moveTo(x(i),y(c.c))});
     }
-    if(gm.creator_token_balance_percent!=null) creator=Math.max(creator,+gm.creator_token_balance_percent*100);
+    cx.strokeStyle="#60a5fa";cx.lineWidth=1.6;cx.stroke();cx.lineWidth=1;
   }
-  D.bundles = Math.max(D.bundles, creator);
-  // sniper heuristic
-  const ageH = t.created ? (Date.now()-t.created)/36e5 : 99;
-  D.snipers = ageH<2 ? Math.min(18, (t.buys||0)*0.04) : Math.min(6,(t.buys||0)*0.008);
-  if(D.lpLock!=null) D.lp = Math.min(100,D.lpLock)*0.15; // rough slice of supply side for visual
-  D.whales = Math.max(0, top10 - D.insiders - D.bundles*0.5);
-  D.pub = Math.max(0, 100 - D.insiders - D.bundles - D.snipers - D.whales - D.lp);
-  if(!rc && !gm) D.est=true; else D.est = false;
-  return D;
+  const last=view[view.length-1];
+  const ly=y(last.c);
+  cx.setLineDash([4,4]);
+  cx.strokeStyle=last.c>=last.o?"rgba(74,222,128,.7)":"rgba(251,113,133,.7)";
+  cx.beginPath();cx.moveTo(padL,ly);cx.lineTo(W-padR,ly);cx.stroke();
+  cx.setLineDash([]);
+  cx.fillStyle=last.c>=last.o?"#4ade80":"#fb7185";
+  cx.fillRect(W-padR+2,ly-8,padR-6,16);
+  cx.fillStyle="#0a0d18";
+  cx.textAlign="left";
+  cx.fillText(fmtPx(last.c),W-padR+6,ly+3);
+  if(cross&&cross.i>=0&&cross.i<view.length){
+    const c=view[cross.i];
+    const xx=x(cross.i);
+    cx.strokeStyle="rgba(139,150,179,.4)";
+    cx.setLineDash([3,3]);
+    cx.beginPath();cx.moveTo(xx,padT);cx.lineTo(xx,padT+plotH+volH);cx.stroke();
+    cx.setLineDash([]);
+    const tip=$("#chartTip");
+    tip.style.display="block";
+    tip.style.left=clamp(xx+12,4,W-190)+"px";
+    tip.style.top=clamp(cross.yy+12,4,H-110)+"px";
+    tip.innerHTML=`<span class="dim">${new Date(c.t).toLocaleString([],{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})}</span><br>O ${fmtPx(c.o)} H ${fmtPx(c.h)}<br>L ${fmtPx(c.l)} C <span class="${c.c>=c.o?"up":"dn"}">${fmtPx(c.c)}</span><br>Vol ${fmtUsd(c.v)}`;
+  }else{$("#chartTip").style.display="none"}
 }
-function rugScore(t, rc, gm, D){
-  let s=100; const R=[];
-  const add=(pts,label,detail,level)=>{ s+=pts; R.push({pts,label,detail,level}); };
-  const age = t.created ? (Date.now()-t.created)/36e5 : 999;
-  if(age<1) add(-22,'Age','Pool created less than 1h ago — max danger window','bad');
-  else if(age<6) add(-12,'Age','Pool is under 6h old','warn');
-  else if(age<24) add(-5,'Age','Pool is under 24h old','warn');
-  else add(6,'Age','Pool is older than 24h','good');
-  const lr = t.mcap>0 ? t.liq/t.mcap : 0;
-  if(t.liq<5000) add(-25,'Liquidity',`Only ${fmt$(t.liq)} liquidity — untradeable size / easy rug`,'bad');
-  else if(t.liq<20000) add(-12,'Liquidity',`${fmt$(t.liq)} liquidity is thin`,'warn');
-  else add(8,'Liquidity',fmt$(t.liq)+' liquidity','good');
-  if(lr<0.02 && t.mcap>50000) add(-15,'Liq/Mcap ratio','Liquidity is under 2% of mcap','warn');
-  if(rc){
-    if(rc.mintAuthority) add(-30,'Mint authority','Mint authority STILL ACTIVE — infinite supply possible','bad');
-    else add(10,'Mint authority','Revoked — supply is fixed','good');
-    if(rc.freezeAuthority) add(-25,'Freeze authority','Freeze authority ACTIVE — honeypot risk','bad');
-    else add(8,'Freeze authority','Revoked','good');
-    const lock = D.lpLock;
-    if(lock!=null){ if(lock>=90) add(12,'LP lock',lock.toFixed(1)+'% of LP locked/burned','good');
-      else if(lock>=50) add(-4,'LP lock',lock.toFixed(1)+'% of LP locked','warn');
-      else add(-18,'LP lock',`Only ${(lock||0).toFixed(1)}% of LP locked — rug-pull vector`,'bad'); }
-    if(D.insiders>8) add(-Math.min(20,D.insiders),'Insiders',D.insiders.toFixed(1)+'% held by flagged insider wallets','bad');
-    if((rc.risks||[]).some(r=>/danger/i.test(r.level||''))) add(-12,'Risk flags','RugCheck flagged danger-level risks','bad');
-  } else add(-6,'RugCheck','No RugCheck data for this chain/token','warn');
-  if(gm){
-    const bt=(gm.buy_tax||0)*100, st=(gm.sell_tax||0)*100;
-    if(bt>5||st>5) add(-25,'Tax',`Buy tax ${bt}% / sell tax ${st}%`,'bad');
-    else if(bt>1||st>1) add(-8,'Tax',`Buy tax ${bt}% / sell tax ${st}%`,'warn');
-    else add(6,'Tax','No significant buy/sell tax detected','good');
-    if(gm.rugged) add(-60,'Rugged','GMGN marks this token as rugged','bad');
-  }
-  if(D.bundles>15) add(-Math.min(20,D.bundles*0.8),'Bundles',`~${D.bundles.toFixed(1)}% bundled/creator supply`,'bad');
-  else if(D.bundles>7) add(-8,'Bundles',`~${D.bundles.toFixed(1)}% bundled/creator supply`,'warn');
-  const bs=t.buys||0, sl=t.sells||0;
-  if(bs+sl>20 && sl/(bs+sl)>0.75) add(-10,'Flow','Sell-side dominated transaction flow','warn');
-  s = Math.max(0, Math.min(100, Math.round(s)));
-  return {s, R};
-}
-async function analyze(t){
-  const base=t.base;
-  state.analysis[base] = state.analysis[base] || {loading:true};
-  renderRug(); renderBubbles();
-  const [rc, gm, dex] = await Promise.all([
-    t.chain==='solana'?fetchRugCheck(base):Promise.resolve(null),
-    fetchGMGN(t), fetchDex(base)
-  ]);
-  if(!state.selected || state.selected.base!==base) return;
-  if(dex?.info?.imageUrl){ $('tkAva').innerHTML = `<img src="${esc(dex.info.imageUrl)}" onerror="this.remove()">`; }
-  if(dex?.info?.socials?.length){ /* keep simple */ }
-  const D = distribution(t, rc, gm);
-  const {s, R} = rugScore(t, rc, gm, D);
-  state.analysis[base] = {score:s, reasons:R, dist:D, rc, gm, dex, tax:gm?{buy:((gm.buy_tax||0)*100).toFixed(1),sell:((gm.sell_tax||0)*100).toFixed(1)}:null, loading:false};
-  t.score = s; t.bundle = D.bundles;
-  renderHead(); renderList(); renderRug(); renderBubbles();
-}
-
-/* ---------------- rug scan pane ---------------- */
-function renderRug(){
-  const t=state.selected; if(!t) return;
-  const an=state.analysis[t.base]; const box=$('rugBox')||$('pane-rug');
-  const pane=$('pane-rug');
-  if(!an){ pane.innerHTML='<div class="empty">Select a token to run rug scan</div>'; return; }
-  if(an.loading){ pane.innerHTML='<div class="empty"><div class="spin" style="display:inline-block"></div> Cross-referencing RugCheck · GMGN · DexScreener…</div>'; return; }
-  const {score,dist:D,reasons:R,rc,gm}=an;
-  const col = score>=70?'var(--grn)':score>=45?'var(--amb)':'var(--red)';
-  const grade = score>=80?'SAFU':score>=70?'DECENT':score>=45?'RISKY':'DANGER';
-  const bar=(lbl,v,c,est)=>`<div class="dlbl"><span>${lbl}${est?' <i style="font-size:8px">(est)</i>':''}</span><b class="mono" style="color:${c}">${v.toFixed(1)}%</b></div>
-    <div class="dbar"><div style="width:${Math.min(100,v)}%;background:${c}"></div></div>`;
-  pane.innerHTML = `<div id="rugBox">
-    <div class="rcard">
-      <h4>Rug Score</h4>
-      <div class="scoreBig" style="color:${col}">${score}<span style="font-size:14px;color:var(--dim)">/100</span></div>
-      <div style="font-weight:900;color:${col};letter-spacing:2px;margin:4px 0 8px">${grade}</div>
-      <div class="dbar" style="height:6px"><div style="width:${score}%;background:${col}"></div></div>
-      <div style="font-size:10px;color:var(--dim);margin-top:8px">Sources: GeckoTerminal ✓ · DexScreener ${an.dex?'✓':'✗'} · RugCheck ${rc?'✓':'✗'} · GMGN ${gm?'✓':'✗ (proxies blocked — heuristic fallback)'}</div>
-    </div>
-    <div class="rcard">
-      <h4>Supply distribution</h4>
-      ${bar('📦 Bundles / creator',D.bundles,'#f0b90b',D.est)}
-      ${bar('🎯 Snipers',D.snipers,'#f97316',true)}
-      ${bar('🕵 Insiders',D.insiders,'#f6465d',false)}
-      ${bar('🐋 Top-10 whales',D.whales,'#8b5cf6',false)}
-      ${bar('🌐 Public float',D.pub,'#0ecb81',false)}
-      <div class="dlbl"><span>🔒 LP locked</span><b class="mono cyn">${D.lpLock!=null?D.lpLock.toFixed(1)+'%':'—'}</b></div>
-    </div>
-    <div class="rcard" style="grid-column:span 2">
-      <h4>Signal breakdown</h4>
-      ${R.map(r=>`<div class="rrow"><div class="rdot" style="background:${r.level==='good'?'var(--grn)':r.level==='warn'?'var(--amb)':'var(--red)'}"></div>
-        <div style="flex:1"><b>${esc(r.label)}</b> <span class="dim">— ${esc(r.detail)}</span></div>
-        <b class="mono ${r.pts>=0?'grn':'red'}">${r.pts>=0?'+':''}${r.pts}</b></div>`).join('')}
-    </div>
-  </div>`;
-}
-
-/* ---------------- bubbles pane ---------------- */
-function renderBubbles(){
-  const t=state.selected; if(!t) return;
-  const an=state.analysis[t.base]; const pane=$('pane-bubbles');
-  if(!an||an.loading){ pane.innerHTML='<div class="empty"><div class="spin" style="display:inline-block"></div> Building bubble map…</div>'; return; }
-  const D=an.dist, rc=an.rc, gm=an.gm;
-  // collect holders
-  let holders=[];
-  if(rc?.topHolders) holders = rc.topHolders.slice(0,20).map(h=>({a:h.address,p:h.percent!=null?h.percent:(h.pct||0),ins:!!h.insider,amm:/pool|amm|raydium|orca|pump/i.test((h.owner||'')+(h.address||''))}));
-  else if(gm?.holders) holders = gm.holders.slice(0,20).map(h=>({a:h.address,p:(h.hold_percent||h.percent||0),ins:/insider|bundl|sniper/i.test(h.tag||''),lock:!!h.is_locked,tag:h.tag}));
-  pane.innerHTML = `<div id="bubWrap">
-    <canvas id="bubCv" width="420" height="300"></canvas>
-    <div id="bubBars" style="flex:1;min-width:240px">
-      <div class="dlbl"><span>Bundle holdings</span><b class="mono amb">${D.bundles.toFixed(1)}%${D.est?' (est)':''}</b></div><div class="dbar"><div style="width:${D.bundles}%;background:#f0b90b"></div></div>
-      <div class="dlbl"><span>Sniper holdings</span><b class="mono" style="color:#f97316">${D.snipers.toFixed(1)}% (est)</b></div><div class="dbar"><div style="width:${D.snipers}%;background:#f97316"></div></div>
-      <div class="dlbl"><span>Insider holdings</span><b class="mono red">${D.insiders.toFixed(1)}%</b></div><div class="dbar"><div style="width:${D.insiders}%;background:#f6465d"></div></div>
-      <div class="dlbl"><span>Top-10 whales</span><b class="mono" style="color:#8b5cf6">${D.whales.toFixed(1)}%</b></div><div class="dbar"><div style="width:${D.whales}%;background:#8b5cf6"></div></div>
-      <div class="dlbl"><span>Public float</span><b class="mono grn">${D.pub.toFixed(1)}%</b></div><div class="dbar"><div style="width:${D.pub}%;background:#0ecb81"></div></div>
-      <div style="font-size:9.5px;color:var(--dim2);margin-top:8px">● sizes = holding % · colors: <span class="red">insider</span> · <span class="amb">locked/bundle</span> · <span class="cyn">LP/AMM</span> · <span class="grn">organic</span></div>
-      ${holders.length?'':'<div style="margin-top:8px;font-size:10px;color:var(--dim)">Individual holder bubbles unavailable for this chain — showing distribution model only.</div>'}
-    </div></div>`;
-  drawBubbles($('bubCv'), holders, D);
-}
-function drawBubbles(cv, holders, D){
-  if(!cv) return; const g=cv.getContext('2d'), W=cv.width, H=cv.height;
-  g.fillStyle='#0a0c12'; g.fillRect(0,0,W,H);
-  const bub=[];
-  holders.forEach(h=>bub.push({p:h.p, c:h.ins?'#f6465d':h.lock?'#f0b90b':h.amm?'#22d3ee':'#0ecb81', lbl:h.p.toFixed(1)+'%'}));
-  if(!bub.length){
-    [['#f0b90b',D.bundles],['#f97316',D.snipers],['#f6465d',D.insiders],['#8b5cf6',D.whales],['#0ecb81',D.pub]].forEach(([c,p])=>bub.push({p,c,lbl:p.toFixed(0)+'%'}));
-  }
-  bub.sort((a,b)=>b.p-a.p);
-  const maxP = bub[0]?.p||1;
-  // simple circle packing
-  const placed=[];
-  bub.forEach((b,idx)=>{
-    const r = 8 + Math.sqrt(b.p/maxP)*52;
-    let x=W/2,y=H/2,ok=false,tries=0;
-    if(idx===0){ placed.push({x,y,r,c:b.c,lbl:b.lbl}); return; }
-    while(!ok && tries<400){
-      const a=Math.random()*Math.PI*2, d=30+Math.random()*(W/2-40);
-      x=W/2+Math.cos(a)*d*0.8; y=H/2+Math.sin(a)*d*0.55;
-      ok = placed.every(p=>Math.hypot(p.x-x,p.y-y)>p.r+r*0.9) && x>r&&x<W-r&&y>r&&y<H-r;
-      tries++;
-    }
-    placed.push({x,y,r,c:b.c,lbl:b.lbl});
-  });
-  placed.forEach(p=>{
-    const gr=g.createRadialGradient(p.x-p.r*.3,p.y-p.r*.3,1,p.x,p.y,p.r);
-    gr.addColorStop(0,p.c+'cc'); gr.addColorStop(1,p.c+'33');
-    g.beginPath(); g.arc(p.x,p.y,p.r,0,7); g.fillStyle=gr; g.fill();
-    g.strokeStyle=p.c; g.lineWidth=1.2; g.stroke();
-    if(p.r>15){ g.fillStyle='#fff'; g.font=`bold ${Math.max(8,p.r*.3)}px ui-monospace,monospace`; g.textAlign='center'; g.fillText(p.lbl,p.x,p.y+3); }
-  });
-}
-
-/* ---------------- paper trading ---------------- */
-const posKey = t => t.chain+t.pool;
-function savePaper(){ save('cash',state.cash); save('pos',state.positions); save('orders',state.orders); save('hist',state.history); save('real',state.realized); save('fees',state.fees); }
-function updateEquity(){
-  let upnl=0, pv=0;
-  Object.values(state.positions).forEach(p=>{ const v=p.qty*(p.last||p.avg); pv+=v; upnl+=v-p.spent; });
-  const eq=state.cash+pv;
-  $('eqVal').textContent=fmt$(eq); $('cashVal').textContent=fmt$(state.cash);
-  $('upnlVal').textContent=(upnl>=0?'+':'')+fmt$(upnl).replace('$','$'); $('upnlVal').className='mono '+(upnl>=0?'grn':'red');
-  $('rpnlVal').textContent=(state.realized>=0?'+':'')+fmt$(state.realized).replace('$','$'); $('rpnlVal').className='mono '+(state.realized>=0?'grn':'red');
-  $('feeVal').textContent=fmt$(state.fees);
-}
-function executeTrade(t, side, usd, price, viaLimit){
-  if(!t||!price||price<=0){ toast('No live price','Wait for a price tick before trading','warn'); return false; }
-  const fee = usd*settings.feeBps/10000;
-  const k = posKey(t);
-  if(side==='buy'){
-    if(usd>state.cash){ toast('Insufficient cash',`Need ${fmt$(usd)}, have ${fmt$(state.cash)}`,'bad'); return false; }
-    const qty=(usd-fee)/price;
-    state.cash-=usd; state.fees+=fee;
-    const p=state.positions[k]||{sym:t.sym,name:t.name,chain:t.chain,pool:t.pool,base:t.base,qty:0,spent:0,avg:0,last:price};
-    p.avg=(p.avg*p.qty+price*qty)/(p.qty+qty); p.qty+=qty; p.spent+=usd-fee; p.last=price;
-    state.positions[k]=p;
-    state.history.unshift({ts:Date.now(),sym:t.sym,side:'buy',qty,price,usd,fee,viaLimit});
-    sndBuy(); toast(`BOUGHT ${t.sym}`,`${fmt$(usd)} @ ${fmtPrice(price)}${viaLimit?' (limit filled)':''}`,'buy',false);
-  } else {
-    const p=state.positions[k];
-    if(!p||p.qty<=0){ toast('No position',`You hold no ${t.sym}`,'warn'); return false; }
-    const qty=Math.min(p.qty, usd>0?usd/price:p.qty);
-    const gross=qty*price, fee2=gross*settings.feeBps/10000, net=gross-fee2;
-    const pnl=(price-p.avg)*qty-fee2;
-    state.cash+=net; state.fees+=fee2; state.realized+=pnl;
-    p.qty-=qty; p.spent*= p.qty>0 ? (p.qty/(p.qty+qty)) : 0; p.last=price;
-    if(p.qty*price<0.5) delete state.positions[k];
-    state.history.unshift({ts:Date.now(),sym:t.sym,side:'sell',qty,price,usd:net,fee:fee2,pnl,viaLimit});
-    sndSell(); toast(`SOLD ${t.sym}`,`${fmt$(net)} @ ${fmtPrice(price)} · PnL ${(pnl>=0?'+':'')+fmt$(pnl).replace('$','$')}`, pnl>=0?'ok':'bad', false);
-  }
-  state.history=state.history.slice(0,200);
-  savePaper(); renderPositions(); renderHistory(); renderPosStrip(); renderStats(); updateEquity();
-  return true;
-}
-function placeOrder(t, side, type, usd, limP){
-  if(type==='market'){ executeTrade(t, side, usd, t.price); return; }
-  if(!limP||limP<=0){ toast('Limit price required','Enter a limit price first','warn'); return; }
-  if(side==='sell'){
-    const p=state.positions[posKey(t)];
-    if(!p||p.qty<=0){ toast('No position','Nothing to sell','warn'); return; }
-    state.orders.push({id:Date.now(),k:posKey(t),sym:t.sym,side,price:limP,qty:p.qty,status:'open',ts:Date.now()});
-  } else {
-    if(usd>state.cash){ toast('Insufficient cash','','bad'); return; }
-    state.cash-=usd; // reserve
-    state.orders.push({id:Date.now(),k:posKey(t),sym:t.sym,side,price:limP,usd,status:'open',ts:Date.now()});
-  }
-  savePaper(); renderOrders(); toast('Limit order placed',`${side.toUpperCase()} ${t.sym} @ ${fmtPrice(limP)}`,'info',false);
-}
-function checkOrders(price){
-  const t=state.selected; if(!t) return;
-  const k=posKey(t); let filled=false;
-  state.orders.forEach(o=>{
-    if(o.status!=='open'||o.k!==k) return;
-    if(o.side==='buy'&&price<=o.price){ o.status='filled'; executeTrade(t,'buy',o.usd,price,true); filled=true; }
-    if(o.side==='sell'&&price>=o.price){ o.status='filled'; const usd=(o.qty||0)*price;
-      // restore nothing; execute sell of full qty
-      const p=state.positions[k]; if(p){ executeTrade(t,'sell',usd,price,true); } filled=true; }
-  });
-  if(filled){ state.orders=state.orders.filter(o=>o.status==='open'||Date.now()-o.ts<864e5); savePaper(); renderOrders(); }
-}
-function checkAlerts(price){
-  const t=state.selected; if(!t) return;
-  state.alerts.forEach(a=>{
-    if(a.hit||a.base!==t.base||a.chain!==t.chain) return;
-    if((a.dir==='above'&&price>=a.price)||(a.dir==='below'&&price<=a.price)){
-      a.hit=true; toast(`🔔 ${t.sym} ${a.dir} ${fmtPrice(a.price)}`,`Now trading ${fmtPrice(price)}`,'warn',true);
-      save('alerts',state.alerts); renderAlerts();
-    }
-  });
-}
-
-/* trade bar wiring */
-let side='buy', otype='market';
-$('sideBuy').onclick=()=>{side='buy';$('sideBuy').classList.add('on');$('sideSell').classList.remove('on');$('btnAction').textContent='BUY';$('btnAction').className='buy';};
-$('sideSell').onclick=()=>{side='sell';$('sideSell').classList.add('on');$('sideBuy').classList.remove('on');$('btnAction').textContent='SELL';$('btnAction').className='sell';};
-$('typeMkt').onclick=()=>{otype='market';$('typeMkt').classList.add('on');$('typeLim').classList.remove('on');$('limPrice').disabled=true;};
-$('typeLim').onclick=()=>{otype='limit';$('typeLim').classList.add('on');$('typeMkt').classList.remove('on');$('limPrice').disabled=false;};
-document.querySelectorAll('.pchips button').forEach(b=>b.onclick=()=>{
-  const pct=+b.dataset.pct;
-  if(side==='buy') $('amtInp').value=Math.floor(state.cash*pct/100);
-  else { const t=state.selected,p=t&&state.positions[posKey(t)]; $('amtInp').value=p?Math.floor(p.qty*(t.price||p.avg)*pct/100):0; }
+cv.addEventListener("mousemove",e=>{
+  const r=cv.getBoundingClientRect();
+  const xx=e.clientX-r.left,yy=e.clientY-r.top;
+  const W=cv.clientWidth;
+  const padR=64,padL=6;
+  const plotW=W-padR-padL;
+  const total=state.candles.length;
+  const count=clamp(state.view.count,20,total||20);
+  const off=clamp(state.view.offset,0,Math.max(0,total-count));
+  const i=Math.floor((xx-padL)/(plotW/count));
+  cross={i:clamp(i,0,count-1),yy};
+  drawChart();
 });
-$('btnAction').onclick=()=>{
-  const t=state.selected; if(!t){toast('Select a token','','warn');return;}
-  const usd=+$('amtInp').value||0, limP=+$('limPrice').value||0;
-  if(usd<=0 && side==='buy'){toast('Enter amount','','warn');return;}
-  placeOrder(t,side,otype,usd,limP);
-};
-document.querySelectorAll('[data-tp]').forEach(b=>b.onclick=()=>{
-  const t=state.selected,p=t&&state.positions[posKey(t)];
-  if(!p){toast('No position','Open a position first, then set TP','warn');return;}
-  const tp=p.avg*(1+ +b.dataset.tp/100);
-  state.orders=state.orders.filter(o=>!(o.k===posKey(t)&&o.side==='sell'));
-  state.orders.push({id:Date.now(),k:posKey(t),sym:t.sym,side:'sell',price:tp,qty:p.qty,status:'open',ts:Date.now(),tag:'TP'});
-  savePaper(); renderOrders(); toast('TP armed',`Sell ${t.sym} @ ${fmtPrice(tp)} (+${b.dataset.tp}%)`,'ok',false);
-});
-document.querySelectorAll('[data-sl]').forEach(b=>b.onclick=()=>{
-  const t=state.selected,p=t&&state.positions[posKey(t)];
-  if(!p){toast('No position','Open a position first, then set SL','warn');return;}
-  const sl=p.avg*(1- +b.dataset.sl/100);
-  state.orders=state.orders.filter(o=>!(o.k===posKey(t)&&o.side==='sell'&&o.tag==='SL'));
-  state.orders.push({id:Date.now(),k:posKey(t),sym:t.sym,side:'sell',price:sl,qty:p.qty,status:'open',ts:Date.now(),tag:'SL'});
-  savePaper(); renderOrders(); toast('SL armed',`Sell ${t.sym} @ ${fmtPrice(sl)} (−${b.dataset.sl}%)`,'warn',false);
-});
-$('btnClrTPSL').onclick=()=>{ const t=state.selected; if(!t)return;
-  state.orders=state.orders.filter(o=>o.k!==posKey(t)); savePaper(); renderOrders(); toast('Cleared',`TP/SL removed for ${t.sym}`,'info',false); };
-$('psSell50').onclick=()=>{ const t=state.selected,p=t&&state.positions[posKey(t)]; if(p) executeTrade(t,'sell',(p.qty*p.last*0.5)||0,t.price); };
-$('psSellAll').onclick=()=>{ const t=state.selected,p=t&&state.positions[posKey(t)]; if(p) executeTrade(t,'sell',p.qty*(t.price||p.avg),t.price); };
-function renderPosStrip(){
-  const t=state.selected,p=t&&state.positions[posKey(t)];
-  const el=$('posStrip');
-  if(!p){ el.style.display='none'; return; }
-  el.style.display='flex';
-  const v=p.qty*(p.last||p.avg), up=v-p.spent, upp=p.spent>0?up/p.spent*100:0;
-  $('psQty').textContent=`${p.qty.toPrecision(6)} ${t.sym}`;
-  $('psVal').textContent=fmt$(v);
-  $('psUpnl').innerHTML=`<span class="${up>=0?'grn':'red'}">${(up>=0?'+':'')+fmt$(up).replace('$','$')} (${fmtP(upp)})</span>`;
-}
-
-/* ---------------- tab panes ---------------- */
-document.querySelectorAll('#tabBar button').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('#tabBar button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
-  ['positions','orders','history','alerts','rug','bubbles','stats'].forEach(p=>$('pane-'+p).style.display = p===b.dataset.tab?'':'none');
-  renderTab(b.dataset.tab);
-});
-function renderTab(which){
-  const on = which || document.querySelector('#tabBar button.on').dataset.tab;
-  ({positions:renderPositions,orders:renderOrders,history:renderHistory,alerts:renderAlerts,rug:renderRug,bubbles:renderBubbles,stats:renderStats})[on]?.();
-}
-function renderPositions(){
-  const ps=Object.entries(state.positions);
-  $('cPos').textContent=ps.length;
-  const pane=$('pane-positions');
-  if(!ps.length){ pane.innerHTML='<div class="empty">No open positions — smash that BUY button</div>'; return; }
-  pane.innerHTML=`<table><tr><th>Token</th><th>Qty</th><th>Avg</th><th>Last</th><th>Value</th><th>uPnL</th><th>uPnL %</th><th></th></tr>${
-    ps.map(([k,p])=>{ const last=p.last||p.avg, v=p.qty*last, up=v-p.spent, upp=p.spent>0?up/p.spent*100:0;
-      return `<tr><td>${esc(p.sym)}</td><td>${p.qty.toPrecision(5)}</td><td>${fmtPrice(p.avg)}</td><td>${fmtPrice(last)}</td><td>${fmt$(v)}</td>
-      <td class="${up>=0?'grn':'red'}">${(up>=0?'+':'')+fmt$(up).replace('$','$')}</td><td class="${up>=0?'grn':'red'}">${fmtP(upp)}</td>
-      <td><button class="xbtn" data-s50="${k}">50%</button> <button class="xbtn" data-sall="${k}">all</button></td></tr>`; }).join('')}</table>`;
-  pane.querySelectorAll('[data-sall]').forEach(b=>b.onclick=()=>{ const p=state.positions[b.dataset.sall]; if(p) executeTrade({sym:p.sym,chain:p.chain,pool:p.pool,base:p.base,price:p.last},'sell',p.qty*(p.last||p.avg),p.last||p.avg); });
-  pane.querySelectorAll('[data-s50]').forEach(b=>b.onclick=()=>{ const p=state.positions[b.dataset.s50]; if(p) executeTrade({sym:p.sym,chain:p.chain,pool:p.pool,base:p.base,price:p.last},'sell',p.qty*(p.last||p.avg)*0.5,p.last||p.avg); });
-}
-function renderOrders(){
-  const os=state.orders.filter(o=>o.status==='open');
-  $('cOrd').textContent=os.length;
-  const pane=$('pane-orders');
-  if(!os.length){ pane.innerHTML='<div class="empty">No open orders</div>'; return; }
-  pane.innerHTML=`<table><tr><th>Token</th><th>Side</th><th>Type</th><th>Price</th><th>Amount</th><th>Age</th><th></th></tr>${
-    os.map(o=>`<tr><td>${esc(o.sym)}</td><td><span class="tpill ${o.side==='buy'?'b':'s'}">${o.side.toUpperCase()}</span></td>
-    <td>${o.tag||'limit'}</td><td>${fmtPrice(o.price)}</td><td>${o.usd?fmt$(o.usd):(o.qty||0).toPrecision(4)+' qty'}</td>
-    <td>${fmtAge(o.ts)}</td><td><button class="xbtn" data-cx="${o.id}">cancel</button></td></tr>`).join('')}</table>`;
-  pane.querySelectorAll('[data-cx]').forEach(b=>b.onclick=()=>{
-    const o=state.orders.find(x=>x.id==b.dataset.cx);
-    if(o&&o.side==='buy'&&o.usd) state.cash+=o.usd; // unreserve
-    if(o) o.status='canceled';
-    state.orders=state.orders.filter(x=>x.status==='open');
-    savePaper(); renderOrders(); updateEquity(); toast('Order canceled','','info',false);
-  });
-}
-function renderHistory(){
-  const pane=$('pane-history');
-  if(!state.history.length){ pane.innerHTML='<div class="empty">No trades yet</div>'; return; }
-  pane.innerHTML=`<table><tr><th>Time</th><th>Token</th><th>Side</th><th>Qty</th><th>Price</th><th>USD</th><th>Fee</th><th>PnL</th></tr>${
-    state.history.slice(0,80).map(h=>`<tr><td>${fmtTime(h.ts)}</td><td>${esc(h.sym)}</td>
-    <td><span class="tpill ${h.side==='buy'?'b':'s'}">${h.side.toUpperCase()}</span></td>
-    <td>${h.qty.toPrecision(4)}</td><td>${fmtPrice(h.price)}</td><td>${fmt$(h.usd)}</td><td class="dim">${fmt$(h.fee)}</td>
-    <td class="${h.pnl==null?'dim':h.pnl>=0?'grn':'red'}">${h.pnl==null?'—':(h.pnl>=0?'+':'')+fmt$(h.pnl).replace('$','$')}</td></tr>`).join('')}</table>`;
-}
-function renderAlerts(){
-  const als=state.alerts; $('cAlr').textContent=als.filter(a=>!a.hit).length;
-  const pane=$('pane-alerts'); const t=state.selected;
-  pane.innerHTML=`<div style="padding:10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-    <b style="font-size:11px">${t?esc(t.sym):'—'}</b>
-    <select id="aDir"><option value="above">goes above</option><option value="below">goes below</option></select>
-    <input id="aPrice" type="number" placeholder="${t&&t.price?fmtPrice(t.price):'price'}" style="width:130px" class="mono">
-    <button class="mbtn" id="aAdd" style="background:var(--grn);color:#04120b;font-weight:800">+ Add alert</button>
-  </div>
-  ${als.length?`<table><tr><th>Token</th><th>Condition</th><th>Target</th><th>Status</th><th></th></tr>${
-    als.map((a,i)=>`<tr><td>${esc(a.sym)}</td><td>${a.dir}</td><td>${fmtPrice(a.price)}</td>
-    <td>${a.hit?'<span class="amb">triggered</span>':'<span class="grn">armed</span>'}</td>
-    <td><button class="xbtn" data-al="${i}">✕</button></td></tr>`).join('')}</table>`:'<div class="empty">No alerts set</div>'}`;
-  $('aAdd').onclick=()=>{ if(!t){toast('Select a token','','warn');return;}
-    const p=+$('aPrice').value||0; if(!p){toast('Enter a price','','warn');return;}
-    state.alerts.push({chain:t.chain,base:t.base,sym:t.sym,dir:$('aDir').value,price:p,hit:false,ts:Date.now()});
-    save('alerts',state.alerts); renderAlerts(); toast('Alert armed',`${t.sym} ${$('aDir').value} ${fmtPrice(p)}`,'ok',false); };
-  pane.querySelectorAll('[data-al]').forEach(b=>b.onclick=()=>{ state.alerts.splice(+b.dataset.al,1); save('alerts',state.alerts); renderAlerts(); });
-}
-$('btnAlert').onclick=()=>{ document.querySelector('#tabBar button[data-tab="alerts"]').click(); };
-function renderStats(){
-  const pane=$('pane-stats');
-  const sells=state.history.filter(h=>h.pnl!=null);
-  const wins=sells.filter(h=>h.pnl>0).length;
-  const wr=sells.length?Math.round(wins/sells.length*100):0;
-  const best=sells.reduce((m,h)=>Math.max(m,h.pnl||0),0);
-  const worst=sells.reduce((m,h)=>Math.min(m,h.pnl||0),0);
-  const streak=sells.slice().reverse().reduce((s,h)=>h.pnl>0?s+1:0,0);
-  const rank = state.realized>500?'🏆 Diamond Degen':state.realized>100?'💎 Trench Warrior':state.realized>0?'⚔ Trencher':'🪖 Recruit';
-  pane.innerHTML=`<div style="padding:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">
-    ${[['Rank',rank],['Realized',(state.realized>=0?'+':'')+fmt$(state.realized).replace('$','$')],['Win rate',wr+'% ('+wins+'/'+sells.length+')'],['Best trade','+'+fmt$(best).replace('$','$')],['Worst trade',fmt$(worst).replace('$','$')],['Trades',state.history.length],['Fees paid',fmt$(state.fees)],['Open positions',Object.keys(state.positions).length]]
-    .map(([l,v])=>`<div class="rcard"><h4>${l}</h4><b style="font-size:15px">${v}</b></div>`).join('')}</div>
-    <div style="padding:0 12px 12px;font-size:10px;color:var(--dim2)">Session leaderboard tracks your own paper accounts — rank up by realizing profit.</div>`;
-}
-
-/* ---------------- wallet tracker ---------------- */
-const RPC='https://api.mainnet-beta.solana.com';
-async function rpc(method,params){
-  const r=await jfetch(RPC,{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})},9000);
-  const j=await r.json(); if(j.error) throw new Error(j.error.message); return j.result;
-}
-$('wAdd').onclick=()=>{
-  const a=$('wInput').value.trim();
-  if(!/^[1-9A-HJ-NP-Za-km-z]{32,48}$/.test(a)){ toast('Invalid address','That does not look like a Solana wallet','bad'); return; }
-  if(state.wallets.some(w=>w.addr===a)){ toast('Already tracked','','warn'); return; }
-  state.wallets.push({addr:a,last:null,status:'new'});
-  $('wInput').value=''; save('wallets',state.wallets); renderWallets();
-  toast('Wallet tracked','Monitoring '+short(a)+' — you will get a toast on buys/sells','ok');
-};
-$('btnScanNow').onclick=()=>scanWallets(true);
-function renderWallets(){
-  $('wList').innerHTML = state.wallets.length ? state.wallets.map((w,i)=>
-    `<div class="wrow"><span class="wdot${w.last?' on':''}"></span><span class="waddr" data-so="${w.addr}" title="${w.addr}">${short(w.addr,6)}</span>
-     <span class="dim" style="font-size:9px">${w.status==='new'?'syncing':w.status||''}</span>
-     <button class="xbtn" data-rm="${i}">✕</button></div>`).join('') : '<div class="empty" style="padding:10px">No wallets tracked yet</div>';
-  $('wList').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ state.wallets.splice(+b.dataset.rm,1); save('wallets',state.wallets); renderWallets(); });
-  $('wList').querySelectorAll('[data-so]').forEach(b=>b.onclick=()=>window.open('https://solscan.io/account/'+b.dataset.so,'_blank'));
-  $('wFeed').innerHTML = state.wfeed.length ? state.wfeed.slice(0,40).map(f=>
-    `<div class="wfi"><span class="t">${fmtTime(f.ts)}</span> <span class="tpill ${f.type==='BUY'?'b':'s'}">${f.type}</span>
-     <span class="waddr" data-so="${f.wallet}" style="display:inline;width:auto">${short(f.wallet,4)}</span><br>
-     <span class="dim">${esc(f.detail)}</span></div>`).join('') : '<div class="empty" style="padding:12px">No activity yet</div>';
-  $('wFeed').querySelectorAll('[data-so]').forEach(b=>b.onclick=()=>window.open('https://solscan.io/account/'+b.dataset.so,'_blank'));
-}
-async function scanWallets(manual){
-  for(const w of state.wallets){
-    try{
-      const sigs=await rpc('getSignaturesForAddress',[w.addr,{limit:5}]);
-      if(!sigs?.length) continue;
-      const newest=sigs[0].signature;
-      if(!w.last){ w.last=newest; w.status='live'; continue; } // baseline silently
-      const fresh=sigs.filter(s=>s.blockTime*1000 > (w.lastTs||0) && s.signature!==w.last && !s.err);
-      w.last=newest; w.lastTs=sigs[0].blockTime*1000; w.status='live';
-      for(const s of fresh.slice(0,2)){
-        let type='TX', detail='on-chain activity', sym='';
-        try{
-          const tx=await rpc('getTransaction',[s.signature,{encoding:'jsonParsed',maxSupportedTransactionVersion:0}]);
-          const keys=tx.transaction.message.accountKeys||[];
-          const idx=keys.findIndex(k=>k.pubkey===w.addr);
-          if(idx>=0 && tx.meta){
-            const delta=((tx.meta.postBalances?.[idx]||0)-(tx.meta.preBalances?.[idx]||0))/1e9;
-            // find token mints moving
-            const pre={},post={};
-            (tx.meta.preTokenBalances||[]).forEach(b=>{ if(b.owner===w.addr) pre[b.mint]=+b.uiTokenBalance?.uiAmount||0; });
-            (tx.meta.postTokenBalances||[]).forEach(b=>{ if(b.owner===w.addr) post[b.mint]=+b.uiTokenBalance?.uiAmount||0; });
-            let mint=null,md=0;
-            new Set([...Object.keys(pre),...Object.keys(post)]).forEach(m=>{ const d=(post[m]||0)-(pre[m]||0); if(Math.abs(d)>Math.abs(md)){md=d;mint=m;} });
-            if(mint){ const dx=await fetchDex(mint); sym=dx?.baseToken?.symbol||short(mint,4); }
-            if(delta<-0.005){ type='BUY'; detail=`spent ${Math.abs(delta).toFixed(3)} SOL${sym?' on '+sym:''}`; }
-            else if(delta>0.005){ type='SELL'; detail=`received ${delta.toFixed(3)} SOL${sym?' for '+sym:''}`; }
-            else { type='TX'; detail='token shuffle (no net SOL move)'+(sym?' · '+sym:''); }
-          }
-        }catch(e){}
-        if(type==='TX' && !manual) continue;
-        const item={ts:Date.now(),wallet:w.addr,type,detail};
-        state.wfeed.unshift(item); state.wfeed=state.wfeed.slice(0,60); save('wfeed',state.wfeed);
-        toast(`${type==='BUY'?'🟢':type==='SELL'?'🔴':'📡'} Wallet ${type}`,`${short(w.addr,4)} ${detail}`, type==='BUY'?'buy':type==='SELL'?'sell':'info', true);
-        if(type==='BUY') sndBuy(); else if(type==='SELL') sndSell();
-      }
-    }catch(e){ w.status='rpc err'; }
-    save('wallets',state.wallets); renderWallets();
-    await new Promise(r=>setTimeout(r,400));
-  }
-}
-
-/* ---------------- settings ---------------- */
-$('btnSettings').onclick=()=>{ $('mSettings').classList.add('open'); syncSettings(); };
-$('mClose').onclick=()=>$('mSettings').classList.remove('open');
-$('mSettings').onclick=e=>{ if(e.target===$('mSettings')) $('mSettings').classList.remove('open'); };
-function syncSettings(){
-  $('sMaster').checked=settings.master; $('sTrade').checked=settings.trade;
-  $('sToastMode').value=settings.toastMode; $('sFee').value=settings.feeBps;
-  $('sFileName').textContent=settings.customName?('Loaded: '+settings.customName):'No custom file loaded';
-}
-function persistSettings(){ save('settings',settings); syncSettings(); }
-$('sMaster').onchange=e=>{ settings.master=e.target.checked; persistSettings(); };
-$('sTrade').onchange=e=>{ settings.trade=e.target.checked; persistSettings(); };
-$('sToastMode').onchange=e=>{ settings.toastMode=e.target.value; persistSettings(); };
-$('sFee').onchange=e=>{ settings.feeBps=Math.max(0,Math.min(500,+$('sFee').value||0)); persistSettings(); };
-$('sToastTest').onclick=()=>{ sndToast(); };
-$('sTradeTest').onclick=()=>{ sndBuy(); setTimeout(sndSell,450); };
-$('sUploadBtn').onclick=()=>$('sFile').click();
-$('sFile').onchange=e=>{
-  const f=e.target.files[0]; if(!f) return;
-  if(f.size>1.8e6){ toast('File too big','Keep custom sounds under ~1.5MB','bad'); return; }
-  const rd=new FileReader();
-  rd.onload=()=>{ settings.customSnd=rd.result; settings.customName=f.name; settings.toastMode='custom'; customAudio=null; persistSettings();
-    toast('Custom sound loaded',esc(f.name)+' — set as toast sound','ok'); };
-  rd.readAsDataURL(f);
-};
-$('sReset').onclick=()=>{
-  if(!confirm('Reset paper account to $10,000 and wipe positions/orders/history?')) return;
-  state.cash=10000; state.positions={}; state.orders=[]; state.history=[]; state.realized=0; state.fees=0;
-  savePaper(); renderPositions(); renderOrders(); renderHistory(); renderStats(); renderPosStrip(); updateEquity();
-  toast('Account reset','Fresh $10,000 deployed. Go trench.','ok'); $('mSettings').classList.remove('open');
-};
-$('sCache').onclick=()=>{ cache.rc={};cache.gm={};cache.dex={}; state.analysis={}; toast('Cache cleared','','info',false); if(state.selected) analyze(state.selected); };
-$('btnStar').onclick=()=>{ const t=state.selected; if(t) toggleWatch(t.chain+t.pool); };
-
-/* ---------------- live price loop ---------------- */
-async function priceLoop(){
-  const t=state.selected; if(!t){ return; }
+cv.addEventListener("mouseleave",()=>{cross=null;drawChart()});
+cv.addEventListener("wheel",e=>{
+  e.preventDefault();
+  state.view.count=clamp(state.view.count+(e.deltaY>0?10:-10),20,400);
+  drawChart();
+},{passive:false});
+/* ============================== trades + traders ============================== */
+async function loadTrades(){
+  const s=state.sel;
+  if(!s)return;
   try{
-    const j=await jget(`${GT}/networks/${t.chain}/pools/${t.pool}`,8000);
-    const a=j?.data?.attributes; if(!a) return;
-    const price=+a.base_token_price_usd;
-    if(price>0){
-      t.mcap=+(a.market_cap_usd??a.fdv_usd)||t.mcap; t.liq=+(a.reserve_in_usd??t.liq);
-      const pc=a.price_change_percentage||{}; t.c5=pc.m5!=null?+pc.m5:t.c5; t.c1=pc.h1!=null?+pc.h1:t.c1; t.c24=pc.h24!=null?+pc.h24:t.c24;
-      pushTick(price); renderHead();
-      // keep list row fresh
-      const lr=state.rowsKey[t.chain+t.pool]; if(lr) Object.assign(lr,{price,mcap:t.mcap,liq:t.liq,c5:t.c5,c1:t.c1,c24:t.c24});
-    }
+    const tr=await geckoTrades(s.net,s.pool);
+    state.trades=tr;
+    renderTrades();
+    buildTraders();
+    buildSnipers();
   }catch(e){}
 }
-
-/* ---------------- clock/status ---------------- */
-setInterval(()=>{ $('clock').innerHTML=`<span id="statusDot" class="${Date.now()-state.lastListFetch<6e4?'on':''}"></span>${fmtTime(Date.now())}`; },1000);
-
-/* ---------------- boot ---------------- */
-function boot(){
-  state.cash=load('cash',10000); state.positions=load('pos',{}); state.orders=load('orders',[]);
-  state.history=load('hist',[]); state.realized=load('real',0); state.fees=load('fees',0);
-  state.alerts=load('alerts',[]); state.watch=load('watch',[]); state.watchRows=load('watchRows',{});
-  state.wallets=load('wallets',[]); state.wfeed=load('wfeed',[]);
-  chartInit(); renderWallets(); renderPositions(); renderOrders(); renderHistory(); renderAlerts(); renderStats(); updateEquity();
-  fetchList();
-  setInterval(()=>fetchList(), 30000);       // list refresh
-  setInterval(priceLoop, 8000);               // selected price
-  setInterval(()=>{ if(state.selected) loadCandles(); }, 60000); // candle refill for fresh tf
-  setInterval(()=>scanWallets(), 30000);      // wallet radar
-  setStatus('Terminal ready — live data: GeckoTerminal · DexScreener · RugCheck · GMGN');
-  setTimeout(()=>toast('Welcome to TRENCHH','Live candles, rug scans, bundle maps and wallet radar are online. Paper trading only — not financial advice.','ok'), 800);
+function renderTrades(){
+  const body=$("#tradesBody");
+  body.innerHTML="";
+  $("#tradesEmpty").style.display=state.trades.length?"none":"block";
+  $("#cTrades").textContent=state.trades.length;
+  state.trades.slice(0,60).forEach(t=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="faint">${fmtT(t.t)}</td><td class="${t.side==="buy"?"up":"dn"}">${t.side.toUpperCase()}</td><td class="dim" title="${esc(t.maker)}">${short(t.maker)}</td><td>${fmtNum(t.amt)}</td><td>${fmtPx(t.price)}</td><td>${fmtUsd(t.usd)}</td>`;
+    body.appendChild(tr);
+  });
 }
-window.addEventListener('error', e=>{ setStatus('runtime note: '+(e.message||'error')); });
-boot();
+function buildTraders(){
+  const map={};
+  state.trades.forEach(t=>{
+    if(!t.maker)return;
+    const m=map[t.maker]||(map[t.maker]={addr:t.maker,vol:0,buys:0,sells:0,flow:0});
+    m.vol+=t.usd;
+    if(t.side==="buy"){m.buys++;m.flow+=t.usd}
+    else{m.sells++;m.flow-=t.usd}
+  });
+  state.traders=Object.values(map).sort((a,b)=>b.vol-a.vol).slice(0,12);
+  const body=$("#traderBody");
+  body.innerHTML="";
+  $("#traderEmpty").style.display=state.traders.length?"none":"block";
+  state.traders.forEach(t=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="dim" title="${esc(t.addr)}">${short(t.addr,5)}</td><td>${fmtUsd(t.vol)}</td><td class="up">${t.buys}</td><td class="dn">${t.sells}</td><td class="${t.flow>=0?"up":"dn"}">${fmtUsd(t.flow)}</td><td><button class="tbtn" data-track="${esc(t.addr)}" style="padding:3px 8px;font-size:9.5px">track</button></td>`;
+    body.appendChild(tr);
+  });
+  $$("#traderBody [data-track]").forEach(b=>b.onclick=()=>{
+    addWallet(b.dataset.track,"trader");
+  });
+}
+function buildSnipers(){
+  const s=state.sel;
+  if(!s||!s.created)return;
+  const win=s.created+10*60000;
+  state.sniperSet=new Set(state.trades.filter(t=>t.t<=win&&t.side==="buy").map(t=>t.maker).filter(Boolean));
+}
+/* ============================== rug + holders + bubbles ============================== */
+async function loadRug(){
+  const s=state.sel;
+  if(!s||s.net!=="solana"){renderRug(null);return}
+  const rep=await rugReport(s.mint);
+  let onchain=null;
+  try{onchain=await onchainChecks(s.mint)}catch(e){}
+  const rug=analyze(rep,onchain,s);
+  state.rug=rug;
+  renderRug(rug);
+  renderHolders();
+  renderBubbles();
+  renderHead();
+}
+async function onchainChecks(mint){
+  const acc=await rpc("getAccountInfo",[mint,{encoding:"base64"}]);
+  if(!acc||!acc.value)return null;
+  const mi=decodeMint(acc.value.data[0]);
+  if(!mi)return null;
+  const larg=await rpc("getTokenLargestAccounts",[mint]);
+  const accs=(larg.value||[]).filter(x=>{try{return BigInt(x.amount)>0n}catch(e){return false}}).slice(0,20);
+  let holders=[];
+  if(accs.length){
+    const res=await rpcBatch(accs.map(a=>({method:"getAccountInfo",params:[a.address,{encoding:"base64"}]})));
+    holders=accs.map((a,i)=>{
+      const r=res[i];
+      if(!r||r.error||!r.result||!r.result.value)return null;
+      const ta=decodeTokenAcc(r.result.value.data[0]);
+      if(!ta)return null;
+      return{acct:a.address,owner:ta.owner,amt:BigInt(a.amount),pct:Number(BigInt(a.amount)*10000n/mi.supply)/100};
+    }).filter(Boolean);
+  }
+  return{mintAuth:mi.mintAuth,freeze:mi.freeze,supplyUi:Number(mi.supply)/10**mi.dec,holders};
+}
+function analyze(rep,oc,s){
+  const risks=(rep&&rep.risks)||[];
+  const dangers=risks.filter(r=>(r.level||"").toLowerCase()==="danger");
+  const warns=risks.filter(r=>(r.level||"").toLowerCase()==="warn");
+  const nets=(rep&&rep.insiderNetworks)||[];
+  const topH=(rep&&rep.topHolders)||[];
+  const bundlePct=nets.reduce((a,n)=>a+(+n.pct||0),0);
+  const insiderPct=topH.filter(h=>h.insider).reduce((a,h)=>a+(+h.pct||0),0);
+  const holders=oc?oc.holders:[];
+  const ownerPct={};
+  holders.forEach(h=>{ownerPct[h.owner]=(ownerPct[h.owner]||0)+h.pct});
+  let sniperPct=0;
+  Object.keys(ownerPct).forEach(o=>{if(state.sniperSet.has(o))sniperPct+=ownerPct[o]});
+  const top10=holders.slice(0,10).reduce((a,h)=>a+h.pct,0);
+  let lp=null;
+  try{lp=Math.max(...((rep&&rep.markets)||[]).map(m=>(m.lp||{}).lpLockedPct||0))}catch(e){}
+  const mintAuth=oc?oc.mintAuth:(rep?rep.mintAuthority!=null?rep.mintAuthority!==null:null:null);
+  const freeze=oc?oc.freeze:(rep?rep.freezeAuthority!=null?rep.freezeAuthority!==null:null:null);
+  const checks=[];
+  checks.push({lb:"Mint authority",st:mintAuth==null?"na":mintAuth?"fail":"pass",vl:mintAuth==null?"unavailable":mintAuth?"ACTIVE":"renounced",w:18});
+  checks.push({lb:"Freeze authority",st:freeze==null?"na":freeze?"fail":"pass",vl:freeze==null?"unavailable":freeze?"ACTIVE":"renounced",w:14});
+  checks.push({lb:"LP locked / burned",st:lp==null?"na":lp>=80?"pass":lp>=50?"warn":"fail",vl:lp==null?"no data":lp.toFixed(1)+"%",w:14});
+  checks.push({lb:"Bundle clusters",st:bundlePct<=2?"pass":bundlePct<=10?"warn":"fail",vl:bundlePct.toFixed(1)+"% in "+nets.length+" net"+(nets.length===1?"":"s"),w:14});
+  checks.push({lb:"Insider wallets",st:insiderPct<=3?"pass":insiderPct<=10?"warn":"fail",vl:insiderPct.toFixed(1)+"% flagged",w:12});
+  checks.push({lb:"Sniper holdings",st:sniperPct<=3?"pass":sniperPct<=10?"warn":"fail",vl:sniperPct.toFixed(1)+"% (early buyers still in top-20)",w:10});
+  checks.push({lb:"Top-10 concentration",st:top10<=25?"pass":top10<=45?"warn":"fail",vl:top10.toFixed(1)+"% of supply",w:10});
+  checks.push({lb:"Liquidity depth",st:s.liq>=50000?"pass":s.liq>=10000?"warn":"fail",vl:fmtUsd(s.liq),w:8});
+  let earned=0,avail=0;
+  checks.forEach(c=>{if(c.w){avail+=c.w;if(c.st==="pass")earned+=c.w;else if(c.st==="warn")earned+=c.w*0.5}});
+  let risk=avail?Math.round(100-earned/avail*100):null;
+  if(mintAuth===true&&top10>40)risk=Math.max(risk||0,90);
+  if(mintAuth===true&&freeze===true)risk=Math.max(risk||0,85);
+  if(bundlePct>20)risk=Math.max(risk||0,85);
+  if(dangers.length>=3)risk=Math.max(risk||0,80);
+  return{risk,bundlePct,insiderPct,sniperPct,top10,lp,nets,topH,holders:oc?oc.holders:[],checks,dangers:risks.filter(r=>(r.level||"").toLowerCase()==="danger").map(r=>r.name),supplyUi:oc?oc.supplyUi:null,rep};
+}
+function renderRug(r){
+  const list=$("#rugList");
+  if(!r){
+    $("#rugScore").textContent="—";
+    $("#rugVerdict").textContent="non-solana or unavailable";
+    $("#rugFill").style.width="0%";
+    $("#rugMeta").textContent="";
+    list.innerHTML="";
+    return;
+  }
+  const col=r.risk<25?"var(--grn)":r.risk<50?"var(--amb)":r.risk<75?"var(--orange,#fb923c)":"var(--red)";
+  $("#rugScore").textContent=r.risk+"%";
+  $("#rugScore").style.color=col;
+  $("#rugVerdict").textContent=r.risk<25?"LOW RISK":r.risk<50?"MODERATE":r.risk<75?"HIGH":"EXTREME";
+  $("#rugFill").style.width=r.risk+"%";
+  $("#rugFill").style.background=col;
+  $("#rugMeta").textContent=`bundles ${r.bundlePct.toFixed(1)}% · insiders ${r.insiderPct.toFixed(1)}% · snipers ${r.sniperPct.toFixed(1)}% · top10 ${r.top10.toFixed(1)}% · lp ${r.lp==null?"n/a":r.lp.toFixed(0)+"%"}${r.dangers.length?" · danger: "+r.dangers.slice(0,3).join(", "):""}`;
+  list.innerHTML="";
+  const icons={pass:"✓",warn:"!",fail:"✕",na:"—"};
+  r.checks.forEach(c=>{
+    list.insertAdjacentHTML("beforeend",`<div class="rugrow ${c.st}"><span class="ic">${icons[c.st]}</span><span>${esc(c.lb)}</span><span class="vl">${esc(c.vl)}</span><span class="wt">${c.w}</span></div>`);
+  });
+}
+async function loadHolders(){
+  if(state.rug)renderHolders();
+}
+function renderHolders(){
+  const r=state.rug;
+  const body=$("#holdBody");
+  body.innerHTML="";
+  const hs=r?r.holders:[];
+  $("#holdEmpty").style.display=hs.length?"none":"block";
+  const netOf={};
+  if(r)r.nets.forEach((n,i)=>{(n.holders||n.addresses||[]).forEach(a=>netOf[a]=i)});
+  hs.slice(0,20).forEach((h,i)=>{
+    const flags=[];
+    if(state.sniperSet.has(h.owner))flags.push(["SNIPER","r"]);
+    if(r&&r.topH.some(t=>t.insider&&(t.owner===h.owner||t.address===h.acct)))flags.push(["INSIDER","r"]);
+    if(netOf[h.owner]!=null)flags.push(["BUNDLE#"+(netOf[h.owner]+1),"a"]);
+    if(i===0&&h.pct>50)flags.push(["CURVE/POOL",""]);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="dim" title="${esc(h.owner)}">${short(h.owner,5)}</td><td>${h.pct.toFixed(2)}%</td><td>${flags.map(f=>`<span class="bdg ${f[1]}">${f[0]}</span>`).join(" ")||'<span class="faint">—</span>'}</td>`;
+    body.appendChild(tr);
+  });
+}
+const BUBCOL=["#a78bfa","#22d3ee","#f472b6","#fb923c","#4ade80","#60a5fa","#fbbf24","#f87171"];
+function renderBubbles(){
+  const r=state.rug;
+  const svg=$("#bubbleSvg");
+  svg.innerHTML="";
+  const stats=$("#bundleStats");
+  if(!r||!r.holders.length){
+    svg.innerHTML='<text x="280" y="160" fill="#5a6480" font-size="11" text-anchor="middle" font-family="JetBrains Mono">bubble map needs solana on-chain holder data</text>';
+    stats.innerHTML='<div class="kv"><span class="k">Bundles</span><span class="v">—</span></div><div class="kv"><span class="k">Insiders</span><span class="v">—</span></div><div class="kv"><span class="k">Snipers</span><span class="v">—</span></div>';
+    $("#bubbleLegend").innerHTML="";
+    return;
+  }
+  const netOf={};
+  r.nets.forEach((n,i)=>{(n.holders||n.addresses||[]).forEach(a=>netOf[a]=i)});
+  const items=[];
+  const curve=r.holders.filter((h,i)=>i===0&&h.pct>40);
+  const wallets=r.holders.filter(h=>!(curve.length&&h===curve[0]));
+  if(curve.length)items.push({pct:curve[0].pct,label:"POOL",color:"#22d3ee",key:"pool"});
+  wallets.slice(0,14).forEach(h=>{
+    let color="#3b4664",key="wallet";
+    if(state.sniperSet.has(h.owner)){color="#fb923c";key="sniper"}
+    if(netOf[h.owner]!=null){color=BUBCOL[netOf[h.owner]%BUBCOL.length];key="bundle"+netOf[h.owner]}
+    else if(r.topH.some(t=>t.insider&&(t.owner===h.owner||t.address===h.acct))){color="#f87171";key="insider"}
+    items.push({pct:h.pct,label:h.pct.toFixed(1)+"%",color,key,owner:h.owner});
+  });
+  const shown=items.reduce((a,i)=>a+i.pct,0);
+  if(100-shown>1)items.push({pct:100-shown,label:"rest",color:"#232c47",key:"rest"});
+  items.sort((a,b)=>b.pct-a.pct).forEach(i=>i.r=Math.max(9,Math.sqrt(i.pct)*11));
+  const placed=[];
+  items.forEach(c=>{
+    let best=null;
+    for(let a=0;a<600;a++){
+      const t=a*0.33,rad=4+a*0.62;
+      const x=280+Math.cos(t)*rad*1.35,y=160+Math.sin(t)*rad*0.72;
+      if(x-c.r<4||x+c.r>556||y-c.r<4||y+c.r>316)continue;
+      let ok=true;
+      for(const p of placed){const dx=p.x-x,dy=p.y-y;if(dx*dx+dy*dy<Math.pow(p.r+c.r+3,2)){ok=false;break}}
+      if(ok){best={x,y};break}
+    }
+    placed.push(Object.assign({},c,best||{x:280,y:160}));
+  });
+  placed.forEach((c,i)=>{
+    const ci=document.createElementNS("http://www.w3.org/2000/svg","circle");
+    ci.setAttribute("cx",c.x);ci.setAttribute("cy",c.y);ci.setAttribute("r",c.r);
+    ci.setAttribute("fill",c.color);ci.setAttribute("fill-opacity",".7");ci.setAttribute("stroke",c.color);
+    ci.style.animationDelay=(i*35)+"ms";
+    const ti=document.createElementNS("http://www.w3.org/2000/svg","title");
+    ti.textContent=(c.owner?short(c.owner,6)+" · ":"")+c.label+" · "+c.pct.toFixed(2)+"%";
+    ci.appendChild(ti);
+    svg.appendChild(ci);
+    if(c.r>22){
+      const tx=document.createElementNS("http://www.w3.org/2000/svg","text");
+      tx.setAttribute("x",c.x);tx.setAttribute("y",c.y+4);tx.setAttribute("text-anchor","middle");
+      tx.setAttribute("fill","#e6ebf7");tx.setAttribute("font-size","10");
+      tx.textContent=c.label;
+      svg.appendChild(tx);
+    }
+  });
+  stats.innerHTML=`
+  <div class="kv"><span class="k">Bundles</span><span class="v" style="color:var(--pur)">${r.bundlePct.toFixed(1)}%</span></div>
+  <div class="kv"><span class="k">Insiders</span><span class="v" style="color:var(--red)">${r.insiderPct.toFixed(1)}%</span></div>
+  <div class="kv"><span class="k">Snipers</span><span class="v" style="color:var(--amb)">${r.sniperPct.toFixed(1)}%</span></div>
+  <div class="kv"><span class="k">Top 10</span><span class="v">${r.top10.toFixed(1)}%</span></div>
+  <div class="kv"><span class="k">LP locked</span><span class="v">${r.lp==null?"—":r.lp.toFixed(0)+"%"}</span></div>
+  <div class="kv"><span class="k">Clusters</span><span class="v">${r.nets.length}</span></div>`;
+  $("#bubbleLegend").innerHTML=`<span style="color:#22d3ee">●</span> pool / curve<br><span style="color:#f87171">●</span> insider flagged<br><span style="color:#fb923c">●</span> sniper (bought &lt;10m)<br><span style="color:#a78bfa">●</span> bundle cluster 1..n<br><span style="color:#3b4664">●</span> plain wallet`;
+}
+/* ============================== price feed ============================== */
+async function priceTick(){
+  const ids=new Set();
+  if(state.sel&&state.sel.net==="solana")ids.add(state.sel.mint);
+  Object.keys(state.book.positions).forEach(m=>ids.add(m));
+  state.watch.forEach(w=>{if(w.chain==="solana")ids.add(w.mint)});
+  state.alerts.forEach(a=>ids.add(a.mint));
+  const list=Array.from(ids).slice(0,40);
+  if(!list.length)return;
+  try{
+    const px=await jupPrices(list);
+    Object.assign(state.prices,px);
+    const s=state.sel;
+    if(s&&px[s.mint]){
+      state.prices[s.mint]=px[s.mint];
+      $("#tPrice").textContent=fmtPx(px[s.mint]);
+      $("#selMark").textContent=fmtPx(px[s.mint]);
+      patchLastCandle(px[s.mint]);
+    }
+    $("#liveTxt").textContent="LIVE "+fmtT(Date.now());
+    checkOrders();
+    checkAlerts();
+    renderPositions();
+    renderEquity();
+    if(state.section==="watch")renderTable();
+  }catch(e){}
+}
+function patchLastCandle(p){
+  const cs=state.candles;
+  if(!cs.length||!p)return;
+  const c=cs[cs.length-1];
+  c.c=p;
+  c.h=Math.max(c.h,p);
+  c.l=Math.min(c.l,p);
+  drawChart();
+}
+setInterval(priceTick,5000);
+/* ============================== paper engine ============================== */
+function markPrice(mint){
+  if(state.prices[mint])return state.prices[mint];
+  if(state.sel&&state.sel.mint===mint&&state.sel.price)return state.sel.price;
+  return null;
+}
+function impactPct(usd,liq){
+  if(!state.settings.impact||!liq)return 0;
+  return clamp((usd/liq)*100*0.5,0,5);
+}
+function marketTrade(side,usd){
+  const s=state.sel;
+  if(!s){toast("r","No token selected","pick a token from the list");return}
+  const px=markPrice(s.mint)||s.price;
+  if(!px){toast("r","No live price","wait for the price feed");return}
+  if(usd<=0){toast("r","Bad amount","enter a USD amount");return}
+  const fee=usd*state.settings.feeBps/10000;
+  const imp=impactPct(usd,s.liq)/100;
+  const fill=side==="buy"?px*(1+imp):px*(1-imp);
+  const qty=usd/fill;
+  if(side==="buy"){
+    if(usd+fee>state.book.cash){toast("r","Insufficient cash","need "+fmtUsd(usd+fee));return}
+    state.book.cash-=usd+fee;
+    const p=state.book.positions[s.mint]||(state.book.positions[s.mint]={qty:0,avg:0,symbol:s.symbol,chain:s.net});
+    p.avg=(p.avg*p.qty+fill*qty)/(p.qty+qty);
+    p.qty+=qty;
+    p.symbol=s.symbol;p.chain=s.net;
+  }else{
+    const p=state.book.positions[s.mint];
+    if(!p||p.qty<1e-12){toast("r","No position","nothing to sell");return}
+    const q=Math.min(qty,p.qty);
+    const proceeds=q*fill;
+    const fee2=proceeds*state.settings.feeBps/10000;
+    state.book.cash+=proceeds-fee2;
+    state.book.realized+=(fill-p.avg)*q-fee2-fee;
+    p.qty-=q;
+    if(p.qty<1e-9)delete state.book.positions[s.mint];
+    usd=proceeds;
+  }
+  state.book.fees+=fee+(side==="sell"?usd*state.settings.feeBps/10000:0);
+  state.book.history.unshift({t:Date.now(),kind:"market",side,mint:s.mint,symbol:s.symbol,qty,price:fill,usd,fee});
+  saveBook();
+  Sound.play(side);
+  toast(side==="buy"?"g":"r",(side==="buy"?"FILLED BUY ":"FILLED SELL ")+s.symbol,`${fmtNum(qty)} @ ${fmtPx(fill)} · ${fmtUsd(usd)} · fee ${fmtUsd(fee)}`,side);
+  renderPositions();renderHistory();renderEquity();renderOrders();
+}
+function placeOrder(kind,side,price,usd){
+  const s=state.sel;
+  if(!s){toast("r","No token selected");return}
+  if(!price||price<=0){toast("r","Bad trigger price");return}
+  const p=state.book.positions[s.mint];
+  let qty=usd/price;
+  if(side==="sell"){
+    if(!p||p.qty<1e-12){toast("r","No position for sell order");return}
+    qty=Math.min(qty,p.qty);
+  }
+  state.book.orders.push({id:uid(),kind,side,mint:s.mint,symbol:s.symbol,price,usd,qty,t:Date.now()});
+  saveBook();
+  renderOrders();
+  toast("","Order placed",`${kind} ${side} ${s.symbol} @ ${fmtPx(price)} · ${fmtUsd(usd)}`);
+}
+function addTPSL(kind,pct){
+  const s=state.sel;
+  if(!s){toast("r","No token selected");return}
+  const p=state.book.positions[s.mint];
+  if(!p||p.qty<1e-12){toast("r","No position","open a position first");return}
+  const px=markPrice(s.mint)||p.avg;
+  const trig=kind==="tp"?p.avg*(1+pct/100):p.avg*(1-pct/100);
+  state.book.orders.push({id:uid(),kind,side:"sell",mint:s.mint,symbol:s.symbol,price:trig,usd:p.qty*px,qty:p.qty,t:Date.now()});
+  saveBook();renderOrders();
+  toast("",(kind==="tp"?"TP":"SL")+" armed",`${s.symbol} ${kind==="tp"?"+":"−"}${pct}% → ${fmtPx(trig)}`);
+}
+function clearTPSL(kind){
+  state.book.orders=state.book.orders.filter(o=>!(o.mint===(state.sel&&state.sel.mint)&&o.kind===kind));
+  saveBook();renderOrders();
+}
+function cancelOrder(id){
+  state.book.orders=state.book.orders.filter(o=>o.id!==id);
+  saveBook();renderOrders();
+}
+function checkOrders(){
+  if(!state.book.orders.length)return;
+  const fills=[];
+  state.book.orders.forEach(o=>{
+    const px=markPrice(o.mint);
+    if(!px)return;
+    if(o.side==="buy"&&(o.kind==="limit")&&px<=o.price)fills.push(o);
+    if(o.side==="sell"&&o.kind==="limit"&&px>=o.price)fills.push(o);
+    if(o.side==="sell"&&o.kind==="tp"&&px>=o.price)fills.push(o);
+    if(o.side==="sell"&&o.kind==="sl"&&px<=o.price)fills.push(o);
+  });
+  fills.forEach(o=>{
+    const fee=o.usd*state.settings.feeBps/10000;
+    if(o.side==="buy"){
+      if(o.usd+fee>state.book.cash)return;
+      state.book.cash-=o.usd+fee;
+      const p=state.book.positions[o.mint]||(state.book.positions[o.mint]={qty:0,avg:0,symbol:o.symbol});
+      p.avg=(p.avg*p.qty+o.price*o.qty)/(p.qty+o.qty);
+      p.qty+=o.qty;
+    }else{
+      const p=state.book.positions[o.mint];
+      if(!p)return;
+      const q=Math.min(o.qty,p.qty);
+      state.book.cash+=q*o.price-fee;
+      state.book.realized+=(o.price-p.avg)*q-fee;
+      p.qty-=q;
+      if(p.qty<1e-9)delete state.book.positions[o.mint];
+    }
+    state.book.fees+=fee;
+    state.book.history.unshift({t:Date.now(),kind:o.kind,side:o.side,mint:o.mint,symbol:o.symbol,qty:o.qty,price:o.price,usd:o.usd,fee});
+    state.book.orders=state.book.orders.filter(x=>x.id!==o.id);
+    Sound.play(o.side);
+    toast(o.side==="buy"?"g":"r",o.kind.toUpperCase()+" FILL "+o.symbol,`${o.side} ${fmtNum(o.qty)} @ ${fmtPx(o.price)}`,o.side);
+  });
+  if(fills.length){saveBook();renderPositions();renderOrders();renderHistory();renderEquity()}
+}
+function checkAlerts(){
+  if(!state.alerts.length)return;
+  const fired=[];
+  state.alerts.forEach(a=>{
+    const px=state.prices[a.mint];
+    if(!px)return;
+    if(a.dir==="above"&&px>=a.price)fired.push(a);
+    if(a.dir==="below"&&px<=a.price)fired.push(a);
+  });
+  fired.forEach(a=>{
+    toast("a","🔔 ALERT "+a.symbol,`price ${a.dir} ${fmtPx(a.price)} (now ${fmtPx(state.prices[a.mint])})`,"alert");
+    state.alerts=state.alerts.filter(x=>x.id!==a.id);
+  });
+  if(fired.length){saveAlerts();renderAlerts()}
+}
+function renderPositions(){
+  const body=$("#posBody");
+  body.innerHTML="";
+  const ps=Object.entries(state.book.positions);
+  $("#posEmpty").style.display=ps.length?"none":"block";
+  $("#cPos").textContent=ps.length;
+  ps.forEach(([mint,p])=>{
+    const mk=markPrice(mint)||p.avg;
+    const val=p.qty*mk;
+    const upnl=(mk-p.avg)*p.qty;
+    const upct=p.avg?((mk-p.avg)/p.avg)*100:0;
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td><b>${esc(p.symbol)}</b></td><td>${fmtNum(p.qty)}</td><td>${fmtPx(p.avg)}</td><td>${fmtPx(mk)}</td><td>${fmtUsd(val)}</td><td class="${upnl>=0?"up":"dn"}">${fmtUsd(upnl)} (${fmtPct(upct)})</td><td><button class="tbtn" data-s50="${esc(mint)}" style="padding:3px 7px;font-size:9.5px">50%</button> <button class="tbtn" data-sall="${esc(mint)}" style="padding:3px 7px;font-size:9.5px">all</button></td>`;
+    body.appendChild(tr);
+  });
+  $$("#posBody [data-s50]").forEach(b=>b.onclick=()=>sellPct(b.dataset.s50,0.5));
+  $$("#posBody [data-sall]").forEach(b=>b.onclick=()=>sellPct(b.dataset.sall,1));
+}
+function sellPct(mint,f){
+  const p=state.book.positions[mint];
+  if(!p)return;
+  const px=markPrice(mint);
+  if(!px)return;
+  const usd=p.qty*px*f;
+  const prev=state.sel;
+  if(!state.sel||state.sel.mint!==mint){
+    const row={mint,net:p.chain||"solana",pool:"",symbol:p.symbol,liq:0};
+    state.sel=row;
+  }
+  marketTrade("sell",usd);
+  if(prev&&prev!==state.sel)state.sel=prev;
+}
+function renderOrders(){
+  const body=$("#ordBody");
+  body.innerHTML="";
+  $("#ordEmpty").style.display=state.book.orders.length?"none":"block";
+  $("#cOrd").textContent=state.book.orders.length;
+  state.book.orders.forEach(o=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="faint">${o.kind}</td><td class="${o.side==="buy"?"up":"dn"}">${o.side}</td><td>${esc(o.symbol)}</td><td>${fmtPx(o.price)}</td><td>${fmtUsd(o.usd)}</td><td><button class="tbtn" data-x="${o.id}" style="padding:3px 7px;font-size:9.5px">✕</button></td>`;
+    body.appendChild(tr);
+  });
+  $$("#ordBody [data-x]").forEach(b=>b.onclick=()=>cancelOrder(b.dataset.x));
+}
+function renderHistory(){
+  const body=$("#hisBody");
+  body.innerHTML="";
+  $("#hisEmpty").style.display=state.book.history.length?"none":"block";
+  state.book.history.slice(0,80).forEach(h=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="faint">${fmtT(h.t)}</td><td class="faint">${h.kind}</td><td class="${h.side==="buy"?"up":"dn"}">${h.side}</td><td>${esc(h.symbol)}</td><td>${fmtNum(h.qty)}</td><td>${fmtPx(h.price)}</td><td>${fmtUsd(h.usd)}</td><td class="faint">${fmtUsd(h.fee)}</td>`;
+    body.appendChild(tr);
+  });
+}
+function renderEquity(){
+  let eq=state.book.cash;
+  let un=0;
+  Object.entries(state.book.positions).forEach(([m,p])=>{
+    const mk=markPrice(m)||p.avg;
+    eq+=p.qty*mk;
+    un+=(mk-p.avg)*p.qty;
+  });
+  $("#eqVal").textContent=fmtUsd(eq);
+  const sp=eq-10000;
+  $("#spnlVal").textContent=(sp>=0?"+":"")+fmtUsd(sp).replace("$","$");
+  $("#spnlVal").className="v "+(sp>=0?"up":"dn");
+  $("#cashVal").textContent=fmtUsd(state.book.cash);
+  $("#unVal").textContent=(un>=0?"+":"")+fmtUsd(un);
+  $("#unVal").className="v "+(un>=0?"up":"dn");
+  $("#reVal").textContent=(state.book.realized>=0?"+":"")+fmtUsd(state.book.realized);
+  $("#reVal").className="v "+(state.book.realized>=0?"up":"dn");
+  $("#feeVal").textContent=fmtUsd(state.book.fees);
+}
+/* ============================== alerts ============================== */
+function renderAlerts(){
+  const body=$("#alertBody");
+  body.innerHTML="";
+  $("#alertEmpty").style.display=state.alerts.length?"none":"block";
+  $("#cAlerts").textContent=state.alerts.length;
+  state.alerts.forEach(a=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td><b>${esc(a.symbol)}</b></td><td class="faint">${a.dir}</td><td>${fmtPx(a.price)}</td><td><button class="tbtn" data-rm="${a.id}" style="padding:3px 7px;font-size:9.5px">✕</button></td>`;
+    body.appendChild(tr);
+  });
+  $$("#alertBody [data-rm]").forEach(b=>b.onclick=()=>{state.alerts=state.alerts.filter(x=>x.id!==b.dataset.rm);saveAlerts();renderAlerts()});
+}
+/* ============================== wallet tracker ============================== */
+function addWallet(addr,label){
+  addr=(addr||"").trim();
+  if(!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(addr)){toast("r","Bad address","not a solana base58 address");return}
+  if(state.wallets.length>=6){toast("r","Wallet limit","max 6 tracked wallets on public rpc");return}
+  if(state.wallets.some(w=>w.addr===addr)){toast("","Already tracking",short(addr));return}
+  state.wallets.push({addr,label:label||"",lastSig:null});
+  saveWallets();renderWallets();
+  $("#wCount").textContent=state.wallets.length;
+  toast("g","Tracking wallet",short(addr)+(label?" ("+label+")":""));
+}
+function renderWallets(){
+  const box=$("#wBody");
+  box.innerHTML="";
+  $("#wCount").textContent=state.wallets.length;
+  if(!state.wallets.length){box.innerHTML='<div class="empty">no wallets tracked — add one above or hit "track" on a top trader</div>';return}
+  state.wallets.forEach(w=>{
+    const el=document.createElement("div");
+    el.className="wrow";
+    el.innerHTML=`<span class="addr" title="${esc(w.addr)}">${esc(w.label||short(w.addr,6))}</span><span class="st ${w.lastSig?"on":""}">${w.lastSig?"polling":"init"}</span><button class="tbtn" data-rw="${esc(w.addr)}" style="padding:3px 8px;font-size:9.5px">✕</button>`;
+    el.querySelector(".addr").onclick=()=>{navigator.clipboard.writeText(w.addr);toast("","Copied",short(w.addr))};
+    el.querySelector("[data-rw]").onclick=()=>{state.wallets=state.wallets.filter(x=>x.addr!==w.addr);saveWallets();renderWallets()};
+    box.appendChild(el);
+  });
+}
+async function walletPoll(){
+  if(!state.wallets.length)return;
+  for(const w of state.wallets.slice(0,6)){
+    try{
+      const sigs=await rpc("getSignaturesForAddress",[w.addr,{limit:6}]);
+      if(!sigs||!sigs.length)continue;
+      if(!w.lastSig){w.lastSig=sigs[0].signature;saveWallets();renderWallets();continue}
+      const fresh=[];
+      for(const s of sigs){
+        if(s.signature===w.lastSig)break;
+        fresh.push(s);
+      }
+      if(!fresh.length)continue;
+      w.lastSig=sigs[0].signature;
+      for(const s of fresh.slice(0,3)){
+        let tx=null;
+        try{tx=await rpc("getTransaction",[s.signature,{encoding:"jsonParsed",maxSupportedTransactionVersion:0}])}catch(e){}
+        if(!tx||!tx.meta)continue;
+        const ev=parseWalletTx(tx,w.addr);
+        if(!ev)continue;
+        const sym=await symbolFor(ev.mint);
+        const usd=state.prices[ev.mint]?Math.abs(ev.amt)*state.prices[ev.mint]:null;
+        toast(ev.side==="buy"?"g":"r","🐋 "+(w.label||short(w.addr,4))+" "+ev.side.toUpperCase()+" "+sym,`${fmtNum(Math.abs(ev.amt))} ${sym}${usd?" ≈ "+fmtUsd(usd):""} · sol Δ ${ev.solD.toFixed(2)}`,"alert");
+      }
+      saveWallets();renderWallets();
+    }catch(e){}
+  }
+}
+function parseWalletTx(tx,addr){
+  try{
+    const m=tx.transaction.message;
+    const keys=(m.accountKeys||[]).map(k=>k.pubkey||k);
+    const idx=keys.indexOf(addr);
+    if(idx<0)return null;
+    const pre=tx.meta.preBalances[idx]/1e9,post=tx.meta.postBalances[idx]/1e9;
+    const solD=post-pre;
+    const tb={};
+    const walk=(list,sgn)=>{(list||[]).forEach(b=>{
+      if(b.owner===addr){
+        const mint=b.mint;
+        const ui=+(b.uiTokenAmount&&b.uiTokenAmount.uiAmountString||0);
+        tb[mint]=(tb[mint]||0)+sgn*ui;
+      }
+    })};
+    walk(tx.meta.preTokenBalances,-1);
+    walk(tx.meta.postTokenBalances,1);
+    const mints=Object.keys(tb).filter(x=>Math.abs(tb[x])>1e-9);
+    if(!mints.length)return null;
+    mints.sort((a,b)=>Math.abs(tb[b])-Math.abs(tb[a]));
+    const mint=mints[0];
+    return{mint,amt:tb[mint],solD,side:tb[mint]>0?"buy":"sell",ts:(tx.blockTime||0)*1000};
+  }catch(e){return null}
+}
+const symCache={};
+async function symbolFor(mint){
+  if(symCache[mint])return symCache[mint];
+  try{
+    const p=await dexToken(mint);
+    const s=p?p.symbol:short(mint,4);
+    symCache[mint]=s;
+    return s;
+  }catch(e){return short(mint,4)}
+}
+setInterval(walletPoll,20000);
+/* ============================== ui wiring ============================== */
+function buildChainChips(){
+  const box=$("#chainChips");
+  box.innerHTML="";
+  const mk=(k,lab)=>{
+    const b=document.createElement("button");
+    b.className="chip"+(state.chain===k?" on":"");
+    b.textContent=lab;
+    b.onclick=()=>{state.chain=k;buildChainChips();loadSection()};
+    box.appendChild(b);
+  };
+  mk("sol","SOL");mk("base","BASE");mk("eth","ETH");mk("bsc","BSC");mk("blast","BLAST");mk("arb","ARB");mk("sui","SUI");
+}
+$$("#secTabs button").forEach(b=>b.onclick=()=>{
+  $$("#secTabs button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");
+  state.section=b.dataset.sec;
+  loadSection();
+});
+$$("table.tbl th[data-sort]").forEach(th=>th.onclick=()=>{
+  const k=th.dataset.sort;
+  if(state.sort.key===k)state.sort.dir*=-1;
+  else state.sort={key:k,dir:k==="created"?-1:-1};
+  renderTable();
+});
+$("#fLiq").addEventListener("input",e=>{state.filters.liq=parseSh(e.target.value);renderTable()});
+$("#fVol").addEventListener("input",e=>{state.filters.vol=parseSh(e.target.value);renderTable()});
+$("#fMc").addEventListener("input",e=>{state.filters.mc=parseSh(e.target.value);renderTable()});
+$("#fAge").addEventListener("change",e=>{state.filters.age=+e.target.value;renderTable()});
+$("#fMin5").addEventListener("input",e=>{state.filters.min5=parseFloat(e.target.value)||0;renderTable()});
+$("#fSearch").addEventListener("input",e=>{state.filters.q=e.target.value;renderTable()});
+[["chipFlag","flag"],["chipFresh","fresh"],["chipMomo","momo"],["chipSafe","safe"],["chipDegen","degen"]].forEach(([id,key])=>{
+  $("#"+id).onclick=()=>{state.filters[key]=!state.filters[key];$("#"+id).classList.toggle("on",state.filters[key]);renderTable()};
+});
+$("#btnClearF").onclick=()=>{
+  state.filters={liq:0,vol:0,mc:0,age:0,min5:0,flag:false,fresh:false,momo:false,safe:false,degen:false,q:state.filters.q};
+  ["fLiq","fVol","fMc","fMin5"].forEach(i=>$("#"+i).value="");
+  $("#fAge").value="0";
+  ["chipFlag","chipFresh","chipMomo","chipSafe","chipDegen"].forEach(i=>$("#"+i).classList.remove("on"));
+  renderTable();
+};
+$$("#tfGrp button").forEach(b=>b.onclick=()=>{
+  $$("#tfGrp button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");
+  state.tf=b.dataset.tf;
+  loadCandles();
+});
+$$("#ctGrp button").forEach(b=>b.onclick=()=>{
+  $$("#ctGrp button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");
+  state.ctype=b.dataset.ct;
+  drawChart();
+});
+$("#btnVol").onclick=()=>{state.showVol=!state.showVol;$("#btnVol").classList.toggle("on",state.showVol);drawChart()};
+$("#btnZin").onclick=()=>{state.view.count=clamp(state.view.count-20,20,400);drawChart()};
+$("#btnZout").onclick=()=>{state.view.count=clamp(state.view.count+20,20,400);drawChart()};
+$("#btnFit").onclick=()=>{state.view.count=clamp(state.candles.length,20,400);state.view.offset=0;drawChart()};
+$$("#centerTabs button").forEach(b=>b.onclick=()=>{
+  $$("#centerTabs button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");
+  state.ctab=b.dataset.ctab;
+  $$(".panel").forEach(p=>p.classList.remove("on"));
+  $("#p-"+state.ctab).classList.add("on");
+});
+let side="buy",otype="market";
+$$("#bsToggle button").forEach(b=>b.onclick=()=>{
+  $$("#bsToggle button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");
+  side=b.dataset.side;
+  updateExecBtn();
+});
+$$("#btToggle button").forEach(b=>b.onclick=()=>{
+  $$("#btToggle button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");
+  otype=b.dataset.type;
+  $("#limPrice").disabled=otype!=="limit";
+  updateExecBtn();
+});
+function updateExecBtn(){
+  const b=$("#btnExec");
+  b.className=side;
+  const s=state.sel;
+  const amt=parseSh($("#amtUsd").value)||0;
+  b.textContent=side.toUpperCase()+" "+(s?s.symbol:"—")+" "+fmtUsd(amt);
+}
+$$("#right [data-pct]").forEach(b=>b.onclick=()=>{
+  const p=+b.dataset.pct;
+  const s=state.sel;
+  if(!s)return;
+  const px=markPrice(s.mint)||s.price||0;
+  if(side==="buy")$("#amtUsd").value=Math.floor(state.book.cash*p/100);
+  else{
+    const pos=state.book.positions[s.mint];
+    $("#amtUsd").value=pos&&px?Math.floor(pos.qty*px*p/100):0;
+  }
+  updateExecBtn();
+});
+$$("#right [data-tp]").forEach(b=>b.onclick=()=>addTPSL("tp",+b.dataset.tp));
+$$("#right [data-sl]").forEach(b=>b.onclick=()=>addTPSL("sl",+b.dataset.sl));
+$$("#right [data-tpclr]").forEach(b=>b.onclick=()=>clearTPSL("tp"));
+$$("#right [data-slclr]").forEach(b=>b.onclick=()=>clearTPSL("sl"));
+$("#amtUsd").addEventListener("input",updateExecBtn);
+$("#btnExec").onclick=()=>{
+  const usd=parseSh($("#amtUsd").value)||0;
+  if(otype==="market")marketTrade(side,usd);
+  else placeOrder("limit",side,parseFloat($("#limPrice").value)||0,usd);
+};
+$("#btnCopy").onclick=()=>{
+  if(!state.sel)return;
+  navigator.clipboard.writeText(state.sel.mint);
+  toast("","Copied CA",short(state.sel.mint,8));
+};
+$("#btnWatch").onclick=()=>{if(state.sel)toggleWatch(state.sel)};
+$("#btnAddAlert").onclick=()=>{
+  const s=state.sel;
+  if(!s){toast("r","No token selected");return}
+  const p=parseFloat($("#alertPrice").value);
+  if(!p||p<=0){toast("r","Bad alert price");return}
+  state.alerts.push({id:uid(),mint:s.mint,symbol:s.symbol,dir:$("#alertDir").value,price:p});
+  saveAlerts();renderAlerts();
+  toast("","Alert armed",s.symbol+" "+$("#alertDir").value+" "+fmtPx(p));
+};
+$("#btnReset").onclick=()=>{
+  if(!confirm("Reset paper account and session?"))return;
+  state.book={cash:10000,positions:{},orders:[],history:[],fees:0,realized:0,t0:Date.now()};
+  saveBook();renderPositions();renderOrders();renderHistory();renderEquity();
+  toast("","Account reset","$10,000 cash");
+};
+/* ============================== settings modal ============================== */
+$("#btnSettings").onclick=()=>{$("#settingsModal").classList.add("on");syncSettingsUI()};
+$("#btnCloseSettings").onclick=()=>$("#settingsModal").classList.remove("on");
+$("#btnWallets").onclick=()=>{$("#walletsModal").classList.add("on");renderWallets()};
+$("#btnCloseW").onclick=()=>$("#walletsModal").classList.remove("on");
+$("#btnAddW").onclick=()=>addWallet($("#wAddr").value,$("#wLabel").value);
+function syncSettingsUI(){
+  $("#sndAlert").value=state.settings.sounds.alert.mode;
+  $("#sndBuy").value=state.settings.sounds.buy.mode;
+  $("#sndSell").value=state.settings.sounds.sell.mode;
+  $("#feeBps").value=state.settings.feeBps;
+  $("#impactSel").value=state.settings.impact?"1":"0";
+  $("#rpcUrl").value=state.settings.rpc||"";
+  refreshSoundState();
+}
+["alert","buy","sell"].forEach(ch=>{
+  const Cap=ch[0].toUpperCase()+ch.slice(1);
+  $("#snd"+Cap).addEventListener("change",e=>{state.settings.sounds[ch].mode=e.target.value;saveSettings();refreshSoundState()});
+  $("#snd"+Cap+"FileBtn").onclick=()=>$("#snd"+Cap+"File").click();
+  $("#snd"+Cap+"File").addEventListener("change",e=>{
+    const f=e.target.files[0];
+    if(!f)return;
+    if(f.size>1500000){toast("r","File too big","keep mp3 under ~1.5MB for localStorage");return}
+    const rd=new FileReader();
+    rd.onload=()=>{
+      state.settings.sounds[ch].data=rd.result;
+      state.settings.sounds[ch].mode="custom";
+      saveSettings();syncSettingsUI();
+      toast("g","Sound saved",ch+" → custom mp3");
+    };
+    rd.readAsDataURL(f);
+  });
+  $("#snd"+Cap+"Prev").onclick=()=>Sound.play(ch);
+});
+$("#feeBps").addEventListener("input",e=>{state.settings.feeBps=clamp(parseFloat(e.target.value)||0,0,1000);saveSettings()});
+$("#impactSel").addEventListener("change",e=>{state.settings.impact=e.target.value==="1";saveSettings()});
+$("#rpcUrl").addEventListener("input",e=>{state.settings.rpc=e.target.value.trim();saveSettings();rpcDead=0});
+$("#btnResetBook").onclick=()=>{
+  state.book={cash:10000,positions:{},orders:[],history:[],fees:0,realized:0,t0:Date.now()};
+  saveBook();renderPositions();renderOrders();renderHistory();renderEquity();
+  toast("","Book reset");
+};
+/* ============================== boot ============================== */
+buildChainChips();
+renderTable();
+renderPositions();
+renderOrders();
+renderHistory();
+renderEquity();
+renderAlerts();
+renderWallets();
+refreshSoundState();
+sizeCanvas();
+drawChart();
+loadSection();
+setInterval(()=>{if(state.section!=="watch")loadSection()},45000);
+priceTick();
+walletPoll();
+document.addEventListener("click",()=>Sound.ensure(),{once:true});
 </script>
 </body>
 </html>
